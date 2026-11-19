@@ -1,0 +1,2158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hospital FL Security Lab</title>
+  <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+  <style>
+    :root {
+      --bg: #070b16;
+      --card: rgba(255, 255, 255, .045);
+      --bd: rgba(255, 255, 255, .09);
+      --tx: #e8ecf6;
+      --mut: #8b96b3;
+      --ac: #5eead4;
+      --ac2: #818cf8;
+      --ok: #22d3a0;
+      --bad: #ff4d6d;
+      --warn: #ffd166;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      color: var(--tx);
+      font-family: Inter, 'Segoe UI', system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      background: radial-gradient(1100px 560px at 8% -10%, rgba(56, 87, 190, .35), transparent),
+        radial-gradient(900px 520px at 100% 0, rgba(120, 50, 190, .28), transparent), var(--bg);
+      min-height: 100vh
+    }
+
+    button,
+    select,
+    input {
+      font-family: inherit
+    }
+
+    /* top bar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 22px;
+      border-bottom: 1px solid var(--bd);
+      background: rgba(7, 11, 22, .6);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 20
+    }
+
+    .logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      background: linear-gradient(135deg, var(--ac), var(--ac2));
+      box-shadow: 0 6px 22px rgba(94, 234, 212, .35)
+    }
+
+    .title h1 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: .2px
+    }
+
+    .title p {
+      margin: 2px 0 0;
+      color: var(--mut);
+      font-size: 12px
+    }
+
+    .spacer {
+      flex: 1
+    }
+
+    .pill {
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid var(--bd);
+      background: var(--card);
+      color: var(--mut)
+    }
+
+    .pill.ok {
+      color: var(--ok);
+      border-color: rgba(34, 211, 160, .4)
+    }
+
+    .pill.bad {
+      color: var(--bad);
+      border-color: rgba(255, 77, 109, .45)
+    }
+
+    .pill.warn {
+      color: var(--warn);
+      border-color: rgba(255, 209, 102, .5)
+    }
+
+    /* layout */
+    .layout {
+      display: grid;
+      grid-template-columns: 310px minmax(0, 1fr) 370px;
+      gap: 16px;
+      padding: 16px 22px 28px;
+      align-items: start
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 16px;
+      padding: 16px;
+      backdrop-filter: blur(8px)
+    }
+
+    .center {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 0
+    }
+
+    .panel h3 {
+      margin: 0 0 12px;
+      font-size: 12px;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: var(--mut);
+      font-weight: 600
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap
+    }
+
+    .panel-head h2 {
+      margin: 0;
+      font-size: 15px
+    }
+
+    .panel-head .sub {
+      color: var(--mut);
+      font-size: 12px
+    }
+
+    /* controls */
+    .group {
+      margin-bottom: 20px
+    }
+
+    .field {
+      margin-bottom: 14px
+    }
+
+    .field label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+      font-size: 13px
+    }
+
+    .field label b {
+      color: var(--ac);
+      font-weight: 600;
+      font-size: 13px
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 99px;
+      outline: none;
+      cursor: pointer;
+      --p: 50%;
+      background: linear-gradient(90deg, var(--ac) var(--p), rgba(255, 255, 255, .14) var(--p))
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--ac);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .5)
+    }
+
+    input[type=range]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--ac)
+    }
+
+    input[type=range].mal {
+      background: linear-gradient(90deg, var(--bad) var(--p), rgba(255, 255, 255, .14) var(--p))
+    }
+
+    input[type=range].mal::-webkit-slider-thumb {
+      border-color: var(--bad)
+    }
+
+    input[type=range]:disabled {
+      opacity: .45;
+      cursor: not-allowed
+    }
+
+    .dots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px
+    }
+
+    .dots span {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--ok);
+      box-shadow: 0 0 8px rgba(34, 211, 160, .5)
+    }
+
+    .malrow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 9px
+    }
+
+    .malrow .hint {
+      margin: 0
+    }
+
+    .dots span.mal {
+      background: var(--bad);
+      box-shadow: 0 0 8px rgba(255, 77, 109, .6)
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px
+    }
+
+    .chip {
+      --c: var(--ac);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      cursor: pointer;
+      border: 1px solid var(--bd);
+      background: rgba(255, 255, 255, .03);
+      color: var(--mut);
+      font-size: 12.5px;
+      transition: .15s
+    }
+
+    .chip i {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--c);
+      opacity: .45
+    }
+
+    .chip:hover {
+      border-color: rgba(255, 255, 255, .25);
+      color: var(--tx)
+    }
+
+    .chip.on {
+      color: var(--tx);
+      border-color: var(--c);
+      background: rgba(255, 255, 255, .07);
+      box-shadow: 0 0 14px -4px var(--c)
+    }
+
+    .chip.on i {
+      opacity: 1;
+      box-shadow: 0 0 8px var(--c)
+    }
+
+    .chip.atk {
+      --c: var(--bad)
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 11px;
+      padding: 12px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      color: #06201c;
+      transition: .15s
+    }
+
+    .btn.run {
+      width: 100%;
+      background: linear-gradient(135deg, var(--ac), #38bdf8);
+      box-shadow: 0 8px 24px rgba(56, 189, 248, .28)
+    }
+
+    .btn.run:hover:not(:disabled) {
+      transform: translateY(-1px);
+      filter: brightness(1.07)
+    }
+
+    .btn:disabled {
+      opacity: .45;
+      cursor: not-allowed
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px
+    }
+
+    .btn.sec {
+      flex: 1;
+      background: rgba(255, 255, 255, .08);
+      color: var(--tx);
+      border: 1px solid var(--bd);
+      padding: 10px
+    }
+
+    .btn.sec:hover:not(:disabled) {
+      background: rgba(255, 255, 255, .14)
+    }
+
+    .hint {
+      color: var(--mut);
+      font-size: 11.5px;
+      margin-top: 8px;
+      line-height: 1.5
+    }
+
+    /* status bar */
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 14px
+    }
+
+    .status .txt {
+      font-size: 13px;
+      min-width: 200px
+    }
+
+    .bar {
+      flex: 1;
+      height: 8px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, .1);
+      overflow: hidden
+    }
+
+    .bar div {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, var(--ac), var(--ac2));
+      transition: width .25s
+    }
+
+    .status .rb {
+      font-variant-numeric: tabular-nums;
+      color: var(--ac);
+      font-weight: 600
+    }
+
+    /* plots */
+    .plot {
+      width: 100%
+    }
+
+    #plot-net {
+      height: 430px
+    }
+
+    #plot-topo {
+      height: 440px
+    }
+
+    #plot-acc {
+      height: 470px
+    }
+
+    #plot-heat {
+      height: 300px
+    }
+
+    .seg {
+      display: inline-flex;
+      border: 1px solid var(--bd);
+      border-radius: 10px;
+      overflow: hidden
+    }
+
+    .seg button {
+      border: 0;
+      background: transparent;
+      color: var(--mut);
+      padding: 6px 12px;
+      cursor: pointer;
+      font-size: 12px
+    }
+
+    .seg button.on {
+      background: rgba(94, 234, 212, .16);
+      color: var(--ac)
+    }
+
+    .mini {
+      border: 1px solid var(--bd);
+      background: rgba(255, 255, 255, .04);
+      color: var(--tx);
+      border-radius: 9px;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer
+    }
+
+    select.mini {
+      padding: 6px 8px
+    }
+
+    select.mini option {
+      background: #10172b
+    }
+
+    .legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      color: var(--mut);
+      font-size: 12px;
+      margin-top: 6px
+    }
+
+    .legend span::before {
+      content: "";
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: -1px;
+      background: var(--c)
+    }
+
+    .empty {
+      display: grid;
+      place-items: center;
+      height: 100%;
+      color: var(--mut);
+      padding: 30px;
+      text-align: center;
+      font-size: 13px
+    }
+
+    /* right side */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 14px;
+      background: rgba(255, 255, 255, .04);
+      padding: 4px;
+      border-radius: 11px
+    }
+
+    .tabs button {
+      flex: 1;
+      border: 0;
+      background: transparent;
+      color: var(--mut);
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12.5px;
+      font-weight: 600
+    }
+
+    .tabs button.on {
+      background: rgba(255, 255, 255, .1);
+      color: var(--tx)
+    }
+
+    .pane {
+      display: none
+    }
+
+    .pane.on {
+      display: block
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px
+    }
+
+    .kpi {
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid var(--bd);
+      border-radius: 12px;
+      padding: 11px 12px
+    }
+
+    .kpi small {
+      display: block;
+      color: var(--mut);
+      font-size: 11px;
+      margin-bottom: 4px
+    }
+
+    .kpi b {
+      font-size: 17px;
+      font-variant-numeric: tabular-nums
+    }
+
+    .kpi.g b {
+      color: var(--ok)
+    }
+
+    .kpi.r b {
+      color: var(--bad)
+    }
+
+    .kpi.a b {
+      color: var(--warn)
+    }
+
+    .sect {
+      margin: 16px 0 8px;
+      font-size: 11px;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      color: var(--mut);
+      font-weight: 600
+    }
+
+    .lb-row {
+      display: grid;
+      grid-template-columns: 104px 1fr 78px;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 7px;
+      font-size: 12.5px
+    }
+
+    .lb-name {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      overflow: hidden
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex: none
+    }
+
+    .lb-bar {
+      height: 9px;
+      background: rgba(255, 255, 255, .08);
+      border-radius: 99px;
+      overflow: hidden
+    }
+
+    .lb-bar div {
+      height: 100%;
+      border-radius: 99px;
+      transition: width .3s
+    }
+
+    .lb-val {
+      text-align: right;
+      font-variant-numeric: tabular-nums
+    }
+
+    .up {
+      color: var(--ok)
+    }
+
+    .down {
+      color: var(--bad)
+    }
+
+    .rs-scroll {
+      max-height: 330px;
+      overflow-y: auto;
+      padding-right: 4px
+    }
+
+    .rs-row {
+      display: grid;
+      grid-template-columns: 34px 78px 1fr 52px;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 8px;
+      border-radius: 10px;
+      margin-bottom: 5px;
+      background: rgba(255, 255, 255, .035);
+      border: 1px solid transparent;
+      font-size: 12px
+    }
+
+    .rs-row.mal {
+      border-color: rgba(255, 77, 109, .35);
+      background: rgba(255, 77, 109, .07)
+    }
+
+    .rs-row.flag {
+      box-shadow: inset 3px 0 0 var(--warn)
+    }
+
+    .rs-id {
+      font-weight: 700
+    }
+
+    .badge {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 99px;
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: .4px
+    }
+
+    .badge.ok {
+      background: rgba(34, 211, 160, .15);
+      color: var(--ok)
+    }
+
+    .badge.mal {
+      background: rgba(255, 77, 109, .18);
+      color: var(--bad)
+    }
+
+    .rs-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0
+    }
+
+    .rs-attack {
+      color: #ffb3c0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .rs-w {
+      height: 5px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, .1);
+      overflow: hidden
+    }
+
+    .rs-w div {
+      height: 100%;
+      background: var(--ac)
+    }
+
+    .rs-z {
+      text-align: right;
+      color: var(--mut);
+      font-variant-numeric: tabular-nums
+    }
+
+    table.mt {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 6px
+    }
+
+    table.mt th,
+    table.mt td {
+      padding: 7px 5px;
+      text-align: center;
+      border-bottom: 1px solid var(--bd)
+    }
+
+    table.mt th {
+      color: var(--mut);
+      font-weight: 600;
+      font-size: 11px
+    }
+
+    table.mt td:first-child,
+    table.mt th:first-child {
+      text-align: left
+    }
+
+    table.mt td.best {
+      color: var(--ok);
+      font-weight: 700
+    }
+
+    .grp-c {
+      color: #7dd3fc
+    }
+
+    .grp-d {
+      color: #fcd34d
+    }
+
+    .insights {
+      background: rgba(94, 234, 212, .07);
+      border: 1px solid rgba(94, 234, 212, .25);
+      border-radius: 12px;
+      padding: 12px 14px;
+      line-height: 1.65;
+      font-size: 13px
+    }
+
+    .insights p {
+      margin: 0 0 7px
+    }
+
+    .insights p:last-child {
+      margin: 0
+    }
+
+    .insights .warn {
+      color: var(--warn)
+    }
+
+    .hist-item {
+      padding: 11px 12px;
+      border: 1px solid var(--bd);
+      border-radius: 12px;
+      margin-bottom: 9px;
+      background: rgba(255, 255, 255, .035);
+      font-size: 12.5px
+    }
+
+    .hist-item .sm {
+      color: var(--mut);
+      font-size: 11.5px;
+      margin: 3px 0
+    }
+
+    .hist-item .acts {
+      display: flex;
+      gap: 7px;
+      margin-top: 8px
+    }
+
+    .hidden {
+      display: none !important
+    }
+
+    .livebox {
+      background: rgba(255, 77, 109, .07);
+      border: 1px solid rgba(255, 77, 109, .3);
+      border-radius: 12px;
+      padding: 11px 12px;
+      margin-top: 6px
+    }
+
+    .urlbox {
+      font-family: ui-monospace, Menlo, Consolas, monospace;
+      font-size: 12px;
+      color: #ffd6dd;
+      background: rgba(0, 0, 0, .25);
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin: 6px 0;
+      white-space: pre-line;
+      word-break: break-all
+    }
+
+    .alert-box {
+      border-radius: 12px;
+      padding: 11px 13px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      line-height: 1.6;
+      border: 1px solid var(--bd);
+      background: rgba(255, 255, 255, .04);
+      color: var(--mut)
+    }
+
+    .alert-box.bad {
+      background: rgba(255, 77, 109, .1);
+      border-color: rgba(255, 77, 109, .5);
+      color: #ffd6dd
+    }
+
+    .alert-box.ok {
+      background: rgba(34, 211, 160, .08);
+      border-color: rgba(34, 211, 160, .35);
+      color: var(--ok)
+    }
+
+    .alert-box b {
+      color: #fff
+    }
+
+    .feed-item {
+      padding: 9px 11px;
+      border-left: 3px solid var(--bd);
+      margin-bottom: 7px;
+      background: rgba(255, 255, 255, .035);
+      border-radius: 0 9px 9px 0;
+      font-size: 12.5px
+    }
+
+    .feed-item.atk {
+      border-color: var(--bad)
+    }
+
+    .feed-item.clr {
+      border-color: var(--ok)
+    }
+
+    .feed-item.sys {
+      border-color: var(--warn)
+    }
+
+    .feed-item small {
+      display: block;
+      color: var(--mut);
+      font-size: 11px;
+      margin-top: 2px
+    }
+
+    .delivery {
+      background: rgba(94, 234, 212, .07);
+      border: 1px solid rgba(94, 234, 212, .3);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 14px
+    }
+
+    .delivery .dl-head {
+      font-size: 14px;
+      margin-bottom: 4px
+    }
+
+    .delivery .tag {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--bad);
+      background: rgba(255, 77, 109, .15);
+      border-radius: 99px;
+      padding: 1px 6px
+    }
+
+    .tabs button {
+      font-size: 11.5px;
+      padding: 8px 4px
+    }
+
+    @media (max-width:1300px) {
+      .layout {
+        grid-template-columns: 300px minmax(0, 1fr)
+      }
+
+      .right {
+        grid-column: 1/-1
+      }
+    }
+
+    @media (max-width:900px) {
+      .layout {
+        grid-template-columns: 1fr
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="topbar">
+    
+    <div class="title">
+      <h1>Hospital Federated Learning · Security Lab</h1>
+      <p id="topbar-sub">Real Pima Indians Diabetes data · live malicious-hospital detection · round by round</p>
+    </div>
+    <div class="spacer"></div>
+    <span class="pill" id="backend-pill">Checking backend…</span>
+  </div>
+
+  <div class="layout">
+
+    <!-- ============ LEFT: CONTROLS ============ -->
+    <aside class="panel left">
+      <div class="group">
+        <h3>Mode</h3>
+        <div class="chips" id="mode-chips"></div>
+        <div class="hint" id="mode-note"></div>
+      </div>
+
+      <div class="group">
+        <h3>Dataset</h3>
+        <div class="chips" id="dataset-chips"></div>
+        <div class="hint" id="dataset-note"></div>
+      </div>
+
+      <div class="group">
+        <h3>Network</h3>
+        <div class="field">
+          <label>Hospitals (nodes) <b id="val-nodes">10</b></label>
+          <input type="range" id="sl-nodes" min="5" max="30" value="10">
+        </div>
+        <div class="field" id="field-mal">
+          <label>Malicious hospitals <b id="val-mal">3 of 10 · 30%</b></label>
+          <input type="range" id="sl-mal" class="mal" min="0" max="9" value="3">
+          <div class="dots" id="dotstrip"></div>
+          <div class="malrow"><span class="hint" id="mal-list"></span><button class="mini" id="btn-shuffle"
+              type="button" title="Pick a new random set of malicious hospitals">🎲 Shuffle</button></div>
+          <div class="hint">Malicious hospitals are picked at random, and a new set is drawn after every run (never side
+            by side when there is room).</div>
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Training</h3>
+        <div class="field">
+          <label>Federated rounds <b id="val-rounds">30</b></label>
+          <input type="range" id="sl-rounds" min="5" max="100" value="30">
+        </div>
+        <div class="field" id="field-speed">
+          <label>Playback speed <b id="val-speed">Normal</b></label>
+          <input type="range" id="sl-speed" min="1" max="10" value="6">
+        </div>
+      </div>
+
+      <div class="group">
+        <h3>Defenses to compare</h3>
+        <div class="chips" id="defense-chips"></div>
+      </div>
+
+      <div class="group" id="grp-attacks">
+        <h3>Attacks (pick one or mix several)</h3>
+        <div class="chips" id="attack-chips"></div>
+        <div class="hint">With several attacks selected, the malicious hospitals take turns using different ones, round
+          by round.</div>
+      </div>
+
+      <div class="group hidden" id="grp-live">
+        <h3>Live session · 2 computers</h3>
+        <div class="field">
+          <label>Seconds per round <b id="val-delay">0.5</b></label>
+          <input type="range" id="sl-delay" min="0.5" max="6" step="0.5" value="2">
+        </div>
+        <div class="livebox">
+          <div class="hint" style="margin-top:0">On the attacker's computer open this address:</div>
+          <div class="urlbox" id="attacker-url">…</div>
+          <button class="mini" id="btn-copy-url" type="button">Copy address</button>
+          <div class="hint">Both computers must be on the same Wi-Fi or network. If the page does not open, allow Python
+            through the firewall.</div>
+        </div>
+        <button class="mini hidden" id="btn-join" type="button" style="margin-top:10px;width:100%">Join the running
+          session</button>
+      </div>
+
+      <button class="btn run" id="btn-run">▶ Run simulation</button>
+      <button class="btn run hidden" id="btn-begin" type="button" disabled style="margin-top:8px">▶ Begin
+        rounds</button>
+      <div class="btn-row">
+        <button class="btn sec" id="btn-pause" disabled>⏸ Pause</button>
+        <button class="btn sec" id="btn-stop" disabled>⏹ Stop</button>
+      </div>
+    </aside>
+
+    <!-- ============ CENTER: LIVE VIEWS ============ -->
+    <section class="center">
+      <div class="panel status">
+        <div class="txt" id="status-text">Ready. Choose settings on the left and press Run.</div>
+        <div class="bar">
+          <div id="progress-fill"></div>
+        </div>
+        <div class="rb" id="round-badge">Round 0 / 0</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Live hospital network</h2>
+          <span class="sub">drag to rotate · scroll to zoom · hover a hospital</span>
+          <div class="spacer"></div>
+          <select class="mini" id="sel-inspect" title="Which defense's detector view to show"></select>
+          <button class="mini" id="btn-rotate">↻ Auto-rotate: on</button>
+        </div>
+        <div id="plot-net" class="plot"></div>
+        <div class="legend">
+          <span style="--c:#22d3a0">Honest hospital</span>
+          <span style="--c:#ff4d6d">Malicious hospital (attack shown on label)</span>
+          <span style="--c:#ffd166">Flagged by the detector this round</span>
+          <span style="--c:#818cf8">Central server</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Network topology</h2>
+          <span class="sub">every hospital and its link to the central server</span>
+        </div>
+        <div id="plot-topo" class="plot"></div>
+        <div class="legend">
+          <span style="--c:#22d3a0">Honest</span>
+          <span style="--c:#ff4d6d">Malicious (attack named beside it)</span>
+          <span style="--c:#ffd166">Flagged this round</span>
+          <span style="--c:#818cf8">Server</span>
+          <span style="--c:#94a3b8">Thicker line = more influence on the global model · dotted = almost excluded</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Accuracy · round by round</h2>
+          <span class="sub">each ribbon is one defense</span>
+          <div class="spacer"></div>
+          <div class="seg"><button id="btn-3d" class="on">3D</button><button id="btn-2d">2D</button></div>
+        </div>
+        <div id="plot-acc" class="plot"></div>
+      </div>
+
+
+    </section>
+
+    <!-- ============ RIGHT: ANALYSIS ============ -->
+    <aside class="panel right">
+      <div class="tabs">
+        <button id="tab-live" class="on">Live analysis</button>
+        <button id="tab-feed">Attack feed</button>
+        <button id="tab-metrics">Results</button>
+        <button id="tab-history">History</button>
+      </div>
+
+      <div class="pane on" id="pane-live">
+        <div class="alert-box" id="attack-now"></div>
+        <div class="kpis">
+          <div class="kpi"><small>Round</small><b id="kpi-round">—</b></div>
+          <div class="kpi g"><small>Leading defense</small><b id="kpi-leader">—</b></div>
+          <div class="kpi a"><small>Malicious caught (this round)</small><b id="kpi-caught">—</b></div>
+          <div class="kpi r"><small>Honest wrongly flagged</small><b id="kpi-false">—</b></div>
+        </div>
+        <div class="sect">Defense ranking (live accuracy)</div>
+        <div id="leaderboard"></div>
+        <div class="sect">Hospital roster <span id="roster-method" style="text-transform:none;letter-spacing:0"></span>
+        </div>
+        <div class="rs-scroll" id="roster"></div>
+      </div>
+
+      <div class="pane" id="pane-feed">
+        <div class="hint" style="margin:0 0 10px">Every attack given to a hospital: which hospital, which attack, who
+          did it, and from which round it counts.</div>
+        <div id="feed-list"></div>
+      </div>
+
+      <div class="pane" id="pane-metrics">
+        <div id="delivery"></div>
+        <div id="insights"></div>
+        <div class="sect">Final metrics</div>
+        <div id="metrics-table"></div>
+        <div style="margin-top:12px"><button class="mini" id="btn-csv" disabled>⬇ Download CSV</button></div>
+      </div>
+
+      <div class="pane" id="pane-history">
+        <div class="hint" style="margin:0 0 10px">Every finished run is saved in a SQLite database. Replay any past run
+          exactly as it happened.</div>
+        <div id="history-list"></div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    /* ===================================================================
+       CONFIG
+       =================================================================== */
+    let API = '';            // auto-detected at startup (see detectBackend)
+    let backendInfo = null;  // {base, live}
+
+    const METHODS = [
+      { id: 'FedAvg', label: 'FedAvg (no defense)', short: 'FedAvg', color: '#f87171', desc: 'Plain average of every hospital — no protection' },
+      { id: 'Multi-Krum', label: 'Multi-Krum', short: 'Multi-Krum', color: '#fb923c', desc: 'Keeps only the least-isolated updates' },
+      { id: 'Trimmed-Mean', label: 'Trimmed-Mean', short: 'Trimmed', color: '#facc15', desc: 'Drops the extreme values before averaging' },
+      { id: 'Median', label: 'Median', short: 'Median', color: '#4ade80', desc: 'Takes the median of every parameter' },
+      { id: 'System A (Hard Exclusion)', label: 'Hard Exclusion', short: 'Hard Excl.', color: '#38bdf8', desc: 'Flagged hospitals are removed from the round' },
+      { id: 'System B (Soft Weighting)', label: 'Soft Weighting ★', short: 'Soft Wt.', color: '#c084fc', desc: 'Suspicious hospitals get less influence (never zero)' },
+    ];
+    const ATTACKS = [
+      { id: 'gradient_scaling', label: 'Gradient Scaling', desc: 'Multiplies its update x10 to dominate the average' },
+      { id: 'sign_flipping', label: 'Sign Flipping', desc: 'Sends the exact opposite of its real update' },
+      { id: 'sybil', label: 'Sybil Collusion', desc: 'Several hospitals submit the same colluding update' },
+      { id: 'free_rider', label: 'Free-Rider', desc: 'Does no training, submits noise' },
+      { id: 'clean_label_backdoor', label: 'Clean-Label Backdoor', desc: 'Hidden trigger, labels stay correct' },
+      { id: 'dirty_label_backdoor', label: 'Dirty-Label Backdoor', desc: 'Hidden trigger plus forced wrong label' },
+      { id: 'gradient_inversion_probe', label: 'Gradient Inversion Probe', desc: 'Passive: tries to rebuild patient data (accuracy unaffected)' },
+      { id: 'label_flipping', label: 'Label Flipping', desc: 'Trains on swapped diagnoses' },
+      { id: 'gaussian_noise', label: 'Gaussian Noise', desc: 'Update corrupted with random noise' },
+      { id: 'byzantine', label: 'Byzantine', desc: 'Arbitrary extreme values every round' },
+    ];
+    const DATASETS = {
+      pima: { label: 'Pima Indians Diabetes', task: 'Diabetes', patients: 768, note: '768 patients · 8 clinical features · diabetic vs not. Hospitals are split by Glucose level.', color: '#5eead4' },
+      breast_cancer: { label: 'Breast Cancer Wisconsin (Diagnostic)', task: 'Breast cancer', patients: 569, note: '569 patients · 30 tumour measurements · malignant vs benign. Hospitals are split by tumour radius.', color: '#f0abfc' },
+    };
+    const SPEED_DELAYS = [1500, 1000, 700, 480, 340, 240, 150, 90, 45, 0];
+    const SPEED_NAMES = ['Very slow', 'Slow', 'Slow', 'Relaxed', 'Normal', 'Normal', 'Fast', 'Fast', 'Very fast', 'Instant'];
+
+    const state = {
+      methods: new Set(METHODS.map(m => m.id)),
+      attacks: new Set(['label_flipping', 'sign_flipping']),
+      mode: 'single', live: false, liveStatus: '', attackLog: [], delivery: null, attackerUrl: '',
+      dataset: 'pima',
+      malIds: [], malFor: null,   // the malicious hospitals for the NEXT run
+      inspect: 'System B (Soft Weighting)',
+      view3d: true, rotate: true, previewOnly: true,
+      run: null, queue: [], streamDone: false, finalEv: null,
+      running: false, paused: false, abort: null, timer: null,
+    };
+
+    const $ = id => document.getElementById(id);
+    const methodInfo = id => METHODS.find(m => m.id === id) || { short: id, color: '#aaa', label: id };
+    const attackName = id => (ATTACKS.find(a => a.id === id) || { label: id }).label;
+    const dsInfo = id => DATASETS[id] || DATASETS.pima;
+    // Runs saved before the second dataset existed have no 'dataset' field: they were all Pima.
+    const runDataset = () => (state.run && state.run.config) ? (state.run.config.dataset || 'pima') : state.dataset;
+    const color = id => methodInfo(id).color;
+    const short = id => methodInfo(id).short;
+    const range = n => Array.from({ length: n }, (_, i) => i);
+    const fmt = (x, d = 1) => (typeof x === 'number' ? x.toFixed(d) : '—');
+    const hasPlotly = () => typeof Plotly !== 'undefined';
+
+    /* ===================================================================
+       SMALL HELPERS
+       =================================================================== */
+    function paintRange(el) {
+      const p = ((+el.value - +el.min) / (+el.max - +el.min)) * 100;
+      el.style.setProperty('--p', (isFinite(p) ? p : 0) + '%');
+    }
+    function setStatus(text, kind) {
+      $('status-text').textContent = text;
+    }
+    function plot(id, traces, layout, config) {
+      if (!hasPlotly()) return;
+      const el = $(id);
+      if (!el.data && !el._fullLayout) el.innerHTML = '';
+      Plotly.react(el, traces, layout, config || { displayModeBar: false, responsive: true });
+    }
+    function clearPlot(id, message) {
+      const el = $(id);
+      if (hasPlotly()) Plotly.purge(el);
+      el.innerHTML = '<div class="empty">' + message + '</div>';
+    }
+    function fibSphere(n, r) {
+      const pts = [], ga = Math.PI * (3 - Math.sqrt(5));
+      for (let i = 0; i < n; i++) {
+        const y = 1 - 2 * (i + 0.5) / n, rad = Math.sqrt(1 - y * y), th = i * ga;
+        pts.push([Math.cos(th) * rad * r, Math.sin(th) * rad * r, y * r]);
+      }
+      return pts;
+    }
+    // Which hospitals are malicious is RANDOM and is re-drawn for every run. The page picks the set
+    // (so the preview is exactly what runs) and sends it to the backend.
+    // Same algorithm as random_malicious_indices() in simulation.py.
+    const MIN_VARIETY = 20;
+    function binom(m, r) {
+      if (r < 0 || r > m) return 0;
+      r = Math.min(r, m - r);
+      let res = 1;
+      for (let i = 1; i <= r; i++) res = res * (m - r + i) / i;
+      return Math.round(res);
+    }
+    // how many ways to choose k of n hospitals with none side by side (H1 and Hn are neighbours on the ring)
+    function ringPlacements(n, k) {
+      if (k === 0) return 1;
+      if (k > Math.floor(n / 2)) return 0;
+      return Math.round(n * binom(n - k, k) / (n - k));
+    }
+    function randomPlacement(n, k, rand) {
+      rand = rand || Math.random;
+      k = Math.max(0, Math.min(n - 1, Math.floor(k)));
+      if (k === 0) return [];
+      const pick = (m, count) => {                     // `count` distinct numbers from 0..m-1
+        const pool = range(m);
+        for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+        return pool.slice(0, count).sort((x, y) => x - y);
+      };
+      if (ringPlacements(n, k) >= MIN_VARIETY) {
+        const extra = n - 2 * k;
+        const cuts = pick(extra + k - 1, k - 1);
+        const bins = []; let prev = -1;
+        cuts.concat([extra + k - 1]).forEach(c => { bins.push(c - prev - 1); prev = c; });
+        let pos = Math.floor(rand() * n);
+        const out = [];
+        for (let i = 0; i < k; i++) { out.push(pos % n); pos += 2 + bins[i]; }
+        return out.sort((x, y) => x - y);
+      }
+      return pick(n, k);
+    }
+    function currentCfg() {
+      return { nodes: +$('sl-nodes').value, mal: +$('sl-mal').value, rounds: +$('sl-rounds').value };
+    }
+    function latest() {
+      const r = state.run;
+      return (r && r.rounds.length) ? r.rounds[r.rounds.length - 1] : null;
+    }
+    function inspectedData(ev) {
+      if (!ev) return null;
+      return ev.methods[state.inspect] || ev.methods[Object.keys(ev.methods)[0]] || null;
+    }
+    function netSetup() {
+      if (state.run && !state.previewOnly) {
+        return { n: state.run.config.num_hospitals, mal: state.run.maliciousIds };
+      }
+      const c = currentCfg();
+      return { n: c.nodes, mal: state.mode === 'live' ? [] : state.malIds };
+    }
+    function totalRounds() {
+      return (state.run && state.run.config) ? state.run.config.rounds : currentCfg().rounds;
+    }
+
+    /* ===================================================================
+       CONTROLS
+       =================================================================== */
+    function buildChips() {
+      const dc = $('defense-chips'); dc.innerHTML = '';
+      METHODS.forEach(m => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip' + (state.methods.has(m.id) ? ' on' : '');
+        b.style.setProperty('--c', m.color);
+        b.title = m.desc;
+        b.innerHTML = '<i></i>' + m.label;
+        b.onclick = () => {
+          if (state.methods.has(m.id)) state.methods.delete(m.id); else state.methods.add(m.id);
+          b.classList.toggle('on', state.methods.has(m.id));
+          refreshInspect();
+        };
+        dc.appendChild(b);
+      });
+      const ac = $('attack-chips'); ac.innerHTML = '';
+      ATTACKS.forEach(a => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip atk' + (state.attacks.has(a.id) ? ' on' : '');
+        b.title = a.desc;
+        b.innerHTML = '<i></i>' + a.label;
+        b.onclick = () => {
+          if (state.attacks.has(a.id)) state.attacks.delete(a.id); else state.attacks.add(a.id);
+          b.classList.toggle('on', state.attacks.has(a.id));
+        };
+        ac.appendChild(b);
+      });
+    }
+    function updateDatasetUI() {
+      const d = dsInfo(state.dataset);
+      $('dataset-note').textContent = d.note;
+      $('topbar-sub').textContent = 'Real ' + d.label + ' data · live malicious-hospital detection · round by round';
+      Array.prototype.forEach.call($('dataset-chips').children || [], b => { b.classList.toggle('on', b.dataset && b.dataset.id === state.dataset); });
+    }
+    function buildDatasetChips() {
+      const box = $('dataset-chips'); box.innerHTML = '';
+      Object.keys(DATASETS).forEach(id => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip' + (id === state.dataset ? ' on' : '');
+        b.dataset.id = id;
+        b.style.setProperty('--c', DATASETS[id].color);
+        b.innerHTML = '<i></i>' + DATASETS[id].label.replace(' (Diagnostic)', '');
+        b.onclick = () => { if (state.running) return; state.dataset = id; updateDatasetUI(); };
+        box.appendChild(b);
+      });
+      updateDatasetUI();
+    }
+    function refreshInspect() {
+      const list = (state.run && !state.previewOnly) ? state.run.methods : METHODS.filter(m => state.methods.has(m.id)).map(m => m.id);
+      const sel = $('sel-inspect');
+      if (list.length && list.indexOf(state.inspect) < 0) state.inspect = list.indexOf('System B (Soft Weighting)') >= 0 ? 'System B (Soft Weighting)' : list[0];
+      sel.innerHTML = list.map(id => '<option value="' + id + '"' + (id === state.inspect ? ' selected' : '') + '>Detector view: ' + short(id) + '</option>').join('');
+    }
+    function updateNodeLabels() {
+      const c = currentCfg();
+      const malSl = $('sl-mal');
+      malSl.max = String(c.nodes - 1);
+      if (+malSl.value > c.nodes - 1) malSl.value = String(c.nodes - 1);
+      const mal = +malSl.value;
+      $('val-nodes').textContent = String(c.nodes);
+      $('val-mal').textContent = mal + ' of ' + c.nodes + ' · ' + Math.round(100 * mal / c.nodes) + '%';
+      $('val-rounds').textContent = String(c.rounds);
+      $('val-speed').textContent = SPEED_NAMES[+$('sl-speed').value - 1];
+      ['sl-nodes', 'sl-mal', 'sl-rounds', 'sl-speed', 'sl-delay'].forEach(id => paintRange($(id)));
+      ensurePlacement(c.nodes, mal);
+      const malSet = new Set(state.malIds);
+      $('dotstrip').innerHTML = range(c.nodes).map(i => '<span class="' + (malSet.has(i) ? 'mal' : '') + '"></span>').join('');
+      $('mal-list').textContent = mal ? 'Next run: ' + state.malIds.map(i => 'H' + (i + 1)).join(' · ') : 'No malicious hospitals';
+    }
+    function ensurePlacement(n, k) {
+      // draw a new random set whenever the numbers change (or when asked to re-roll with malFor = null)
+      if (!state.malFor || state.malFor.n !== n || state.malFor.k !== k) {
+        state.malIds = randomPlacement(n, k);
+        state.malFor = { n: n, k: k };
+      }
+    }
+    function rerollForNextRun() { state.malFor = null; updateNodeLabels(); }
+    function onNetworkSliderChange() {
+      updateNodeLabels();
+      if (!state.running) {
+        state.previewOnly = true;
+        drawNetwork(); drawTopology(); renderRoster(); renderKpis(); renderLeaderboard();
+        if (!state.run) { drawAcc(); }
+      }
+    }
+    function bindControls() {
+      $('sl-nodes').oninput = onNetworkSliderChange;
+      $('sl-mal').oninput = onNetworkSliderChange;
+      $('sl-rounds').oninput = () => { updateNodeLabels(); if (!state.running && !state.run) { drawAcc(); } updateProgress(); };
+      $('sl-speed').oninput = updateNodeLabels;
+      $('sel-inspect').onchange = e => { state.inspect = e.target.value; drawNetwork(); drawTopology(); renderRoster(); renderKpis(); };
+      $('btn-shuffle').onclick = () => { if (state.running) return; state.malFor = null; onNetworkSliderChange(); };
+      $('btn-run').onclick = () => (state.mode === 'live' ? openLive() : startRun());
+      $('btn-begin').onclick = beginLive;
+      $('btn-join').onclick = joinLive;
+      $('btn-copy-url').onclick = copyAttackerUrl;
+      $('sl-delay').oninput = onDelayChange;
+      $('btn-pause').onclick = togglePause;
+      $('btn-stop').onclick = stopRun;
+      $('btn-rotate').onclick = () => { state.rotate = !state.rotate; updateRotateBtn(); };
+      $('btn-3d').onclick = () => setView(true);
+      $('btn-2d').onclick = () => setView(false);
+      $('btn-csv').onclick = downloadCsv;
+      ['live', 'feed', 'metrics', 'history'].forEach(t => { $('tab-' + t).onclick = () => showTab(t); });
+      $('plot-net').addEventListener('pointerdown', () => { if (state.rotate) { state.rotate = false; updateRotateBtn(); } });
+    }
+    function updateRotateBtn() { $('btn-rotate').textContent = '↻ Auto-rotate: ' + (state.rotate ? 'on' : 'off'); }
+    function setView(is3d) {
+      state.view3d = is3d;
+      $('btn-3d').classList.toggle('on', is3d);
+      $('btn-2d').classList.toggle('on', !is3d);
+      if (hasPlotly()) Plotly.purge($('plot-acc'));
+      drawAcc();
+    }
+    function showTab(t) {
+      ['live', 'feed', 'metrics', 'history'].forEach(x => {
+        $('tab-' + x).classList.toggle('on', x === t);
+        $('pane-' + x).classList.toggle('on', x === t);
+      });
+      if (t === 'history') loadHistory();
+    }
+    function setRunning(b) {
+      state.running = b;
+      $('btn-run').disabled = b;
+      $('btn-pause').disabled = !b;
+      $('btn-stop').disabled = !b;
+      ['sl-nodes', 'sl-mal', 'sl-rounds'].forEach(id => { $(id).disabled = b; });
+      $('btn-shuffle').disabled = b;
+      Array.prototype.forEach.call($('mode-chips').children, c => { c.disabled = b; });
+      if (!b) { state.paused = false; $('btn-pause').textContent = '⏸ Pause'; }
+    }
+    function updateProgress() {
+      const total = totalRounds();
+      const done = state.run ? state.run.rounds.length : 0;
+      $('progress-fill').style.width = (total ? (100 * done / total) : 0) + '%';
+      $('round-badge').textContent = 'Round ' + done + ' / ' + total;
+    }
+
+    /* ===================================================================
+       3D NETWORK
+       =================================================================== */
+    function drawNetwork() {
+      const { n, mal } = netSetup();
+      const malSet = new Set(mal);
+      const ev = state.previewOnly ? null : latest();
+      const md = inspectedData(ev);
+      const flagged = new Set(md ? md.flagged : []);
+      const P = fibSphere(n, 3);
+
+      const nx = [], ny = [], nz = [], cols = [], sizes = [], labels = [], hover = [], lineCols = [];
+      const lx = [], ly = [], lz = [];          // normal links
+      const fx = [], fy = [], fz = [];          // flagged links
+      const hx = [], hy = [], hz = [];          // flagged halos
+
+      for (let i = 0; i < n; i++) {
+        const [x, y, z] = P[i];
+        const isMal = malSet.has(i);
+        const isFlag = flagged.has(i);
+        const attack = ev ? (ev.attacks[String(i)] || null) : null;
+        nx.push(x); ny.push(y); nz.push(z);
+        cols.push(isMal ? '#ff4d6d' : '#22d3a0');
+        sizes.push(isMal ? 11 : 8);
+        lineCols.push(isFlag ? '#ffd166' : 'rgba(255,255,255,.35)');
+        labels.push('H' + (i + 1) + (isMal ? (attack ? ' · ' + attack : ' ⚠') : ''));
+
+        let h = '<b>Hospital ' + (i + 1) + '</b><br>' + (isMal ? '🔴 Malicious' : '🟢 Honest');
+        if (isMal) h += '<br>Attack this round: ' + (ev ? (attack || '—') : 'not started');
+        if (md) {
+          h += '<br>z-score: ' + md.z[i];
+          h += '<br>' + (isFlag ? '⚠ Flagged by detector' : 'Not flagged');
+          if (md.weights) h += '<br>Influence on global model: ' + (md.weights[i] * 100).toFixed(1) + '%';
+        }
+        hover.push(h);
+
+        if (isFlag) { fx.push(0, x, null); fy.push(0, y, null); fz.push(0, z, null); hx.push(x); hy.push(y); hz.push(z); }
+        else { lx.push(0, x, null); ly.push(0, y, null); lz.push(0, z, null); }
+      }
+
+      const traces = [
+        { type: 'scatter3d', mode: 'lines', x: lx, y: ly, z: lz, line: { color: 'rgba(148,163,184,.30)', width: 2 }, hoverinfo: 'skip' },
+        { type: 'scatter3d', mode: 'lines', x: fx, y: fy, z: fz, line: { color: '#ffd166', width: 5 }, hoverinfo: 'skip' },
+        { type: 'scatter3d', mode: 'markers', x: hx, y: hy, z: hz, marker: { size: 22, color: '#ffd166' }, opacity: 0.28, hoverinfo: 'skip' },
+        {
+          type: 'scatter3d', mode: 'markers+text', x: nx, y: ny, z: nz, text: labels, textposition: 'top center',
+          textfont: { color: '#cbd5e1', size: 11 }, hovertext: hover, hoverinfo: 'text',
+          marker: { size: sizes, color: cols, line: { color: lineCols, width: 2 } }
+        },
+        {
+          type: 'scatter3d', mode: 'markers+text', x: [0], y: [0], z: [0], text: ['Central Server'], textposition: 'bottom center',
+          textfont: { color: '#c7d2fe', size: 12 }, hovertext: ['<b>Central Server</b><br>Collects updates and aggregates them'], hoverinfo: 'text',
+          marker: { size: 15, color: '#818cf8', symbol: 'diamond', line: { color: '#ffffff', width: 2 } }
+        },
+      ];
+      const ax = { visible: false, showbackground: false, range: [-4.4, 4.4] };
+      const scene = { xaxis: ax, yaxis: ax, zaxis: ax, aspectmode: 'cube', bgcolor: 'rgba(0,0,0,0)' };
+      const el = $('plot-net');
+      if (!el.data) scene.camera = { eye: { x: 1.7, y: 1.1, z: 0.8 } };
+      plot('plot-net', traces, { paper_bgcolor: 'rgba(0,0,0,0)', margin: { l: 0, r: 0, t: 0, b: 0 }, showlegend: false, uirevision: 'net', scene: scene });
+    }
+
+    /* ===================================================================
+       2D NETWORK TOPOLOGY (server in the centre, every hospital on a ring)
+       =================================================================== */
+    function drawTopology() {
+      const { n, mal } = netSetup();
+      const malSet = new Set(mal);
+      const ev = state.previewOnly ? null : latest();
+      const md = inspectedData(ev);
+      const flagged = new Set(md ? md.flagged : []);
+      const hasW = !!(md && md.weights);
+      const maxW = hasW ? (Math.max.apply(null, md.weights) || 1) : 1;
+      const pos = range(n).map(i => { const a = Math.PI / 2 - 2 * Math.PI * i / n; return [Math.cos(a), Math.sin(a)]; });
+
+      const traces = [];
+      // links: server <-> hospital. Thickness = influence on the global model.
+      for (let i = 0; i < n; i++) {
+        const isMal = malSet.has(i), isFlag = flagged.has(i);
+        const w = hasW ? md.weights[i] : null;
+        traces.push({
+          type: 'scatter', mode: 'lines', x: [0, pos[i][0]], y: [0, pos[i][1]], hoverinfo: 'skip', showlegend: false,
+          line: {
+            color: isFlag ? '#ffd166' : (isMal ? 'rgba(255,77,109,.8)' : 'rgba(34,211,160,.6)'),
+            width: hasW ? 1.5 + 10 * (w / maxW) : 3, dash: (hasW && w < 0.02) ? 'dot' : 'solid'
+          }
+        });
+      }
+      const size = Math.max(20, 38 - n);
+      const gx = [], gy = [];                       // amber glow behind flagged hospitals
+      const nx = [], ny = [], txt = [], cols = [], sizes = [], hover = [], edge = [];
+      const lx = [], ly = [], lt = [], lp = [];     // attack labels outside the ring
+      for (let i = 0; i < n; i++) {
+        const isMal = malSet.has(i), isFlag = flagged.has(i);
+        const attack = ev ? (ev.attacks[String(i)] || null) : null;
+        nx.push(pos[i][0]); ny.push(pos[i][1]);
+        txt.push('H' + (i + 1));
+        cols.push(isMal ? '#ff4d6d' : '#22d3a0');
+        sizes.push(isMal ? size + 4 : size);
+        edge.push(isFlag ? '#ffd166' : 'rgba(255,255,255,.55)');
+        if (isFlag) { gx.push(pos[i][0]); gy.push(pos[i][1]); }
+        let h = '<b>Hospital ' + (i + 1) + '</b><br>' + (isMal ? '🔴 Malicious' : '🟢 Honest');
+        if (isMal) h += '<br>Attack this round: ' + (ev ? (attack || '—') : 'not started');
+        if (md) {
+          h += '<br>z-score: ' + md.z[i] + '<br>' + (isFlag ? '⚠ Flagged by detector' : 'Not flagged');
+          if (md.weights) h += '<br>Influence: ' + (md.weights[i] * 100).toFixed(1) + '%';
+        }
+        hover.push(h);
+        if (isMal) {
+          lx.push(pos[i][0] * 1.14); ly.push(pos[i][1] * 1.14);
+          lt.push(ev ? (attack || '') : 'malicious');
+          lp.push(pos[i][0] > 0.3 ? 'middle right' : (pos[i][0] < -0.3 ? 'middle left' : (pos[i][1] > 0 ? 'top center' : 'bottom center')));
+        }
+      }
+      traces.push({ type: 'scatter', mode: 'markers', x: gx, y: gy, marker: { size: size + 22, color: '#ffd166', opacity: 0.25 }, hoverinfo: 'skip', showlegend: false });
+      traces.push({
+        type: 'scatter', mode: 'markers+text', x: nx, y: ny, text: txt, textposition: 'middle center', textfont: { color: '#06101c', size: 11 },
+        marker: { size: sizes, color: cols, line: { color: edge, width: 3 } }, hovertext: hover, hoverinfo: 'text', showlegend: false
+      });
+      traces.push({ type: 'scatter', mode: 'text', x: lx, y: ly, text: lt, textposition: lp, textfont: { color: '#ff8fa3', size: 11 }, hoverinfo: 'skip', showlegend: false });
+      traces.push({
+        type: 'scatter', mode: 'markers+text', x: [0], y: [0], text: ['Server'], textposition: 'middle center', textfont: { color: '#ffffff', size: 12 },
+        marker: { size: 62, color: '#4f46e5', line: { color: '#a5b4fc', width: 3 } },
+        hovertext: ['<b>Central server</b><br>Collects the hospitals\' updates and aggregates them'], hoverinfo: 'text', showlegend: false
+      });
+
+      plot('plot-topo', traces, {
+        paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', margin: { l: 4, r: 4, t: 4, b: 4 }, showlegend: false,
+        xaxis: { visible: false, range: [-2.7, 2.7], fixedrange: true },
+        yaxis: { visible: false, range: [-1.75, 1.75], scaleanchor: 'x', scaleratio: 1, fixedrange: true }
+      });
+    }
+
+    /* ===================================================================
+       ACCURACY (3D ribbons / 2D lines)
+       =================================================================== */
+    function drawAcc() {
+      const run = state.run;
+      const methods = run ? run.methods : METHODS.filter(m => state.methods.has(m.id)).map(m => m.id);
+      const rounds = run ? run.rounds : [];
+      const total = totalRounds();
+      const xs = rounds.map(e => e.round);
+
+      let lo = 0, hi = 100;
+      if (rounds.length) {
+        const all = [];
+        rounds.forEach(e => methods.forEach(m => { if (e.methods[m]) all.push(e.methods[m].accuracy); }));
+        lo = Math.max(0, Math.floor(Math.min.apply(null, all) / 5) * 5 - 5);
+        hi = Math.min(100, Math.ceil(Math.max.apply(null, all) / 5) * 5 + 5);
+      }
+
+      const traces = [];
+      methods.forEach((mid, j) => {
+        const ys = rounds.map(e => e.methods[mid] ? e.methods[mid].accuracy : null);
+        const c = color(mid), nm = short(mid);
+        if (state.view3d) {
+          if (xs.length >= 2) {
+            traces.push({
+              type: 'surface', x: xs, y: [j - 0.3, j + 0.3], z: [ys, ys], colorscale: [[0, c], [1, c]], showscale: false,
+              opacity: 0.6, hovertemplate: 'Round %{x}<br>' + nm + ': %{z:.2f}%<extra></extra>',
+              lighting: { ambient: 0.95, diffuse: 0.25 }, contours: { x: { show: false }, y: { show: false }, z: { show: false } }
+            });
+          }
+          traces.push({
+            type: 'scatter3d', mode: 'lines', x: xs, y: xs.map(() => j), z: ys, line: { color: c, width: 7 },
+            hovertemplate: 'Round %{x}<br>' + nm + ': %{z:.2f}%<extra></extra>'
+          });
+          if (xs.length) {
+            const k = xs.length - 1;
+            traces.push({
+              type: 'scatter3d', mode: 'markers+text', x: [xs[k]], y: [j], z: [ys[k]], text: [fmt(ys[k]) + '%'],
+              textposition: 'top center', textfont: { color: c, size: 11 }, marker: { size: 5, color: c }, hoverinfo: 'skip'
+            });
+          }
+        } else {
+          traces.push({
+            type: 'scatter', mode: 'lines+markers', x: xs, y: ys, name: nm, line: { color: c, width: 3, shape: 'spline', smoothing: 0.4 },
+            marker: { size: 5 }, hovertemplate: nm + ': %{y:.2f}%<extra></extra>'
+          });
+        }
+      });
+
+      const font = { color: '#aab4cf', size: 12 };
+      const grid = 'rgba(255,255,255,.09)';
+      let layout;
+      if (state.view3d) {
+        const axis = (extra) => Object.assign({ color: '#8b96b3', gridcolor: grid, zerolinecolor: grid, showbackground: false }, extra);
+        const scene = {
+          xaxis: axis({ title: 'Round', range: [1, Math.max(2, total)] }),
+          yaxis: axis({ title: '', tickmode: 'array', tickvals: methods.map((_, j) => j), ticktext: methods.map(short), range: [-0.7, Math.max(0.7, methods.length - 0.3)] }),
+          zaxis: axis({ title: 'Accuracy (%)', range: [lo, hi] }),
+          aspectmode: 'manual', aspectratio: { x: 2.3, y: 1.25, z: 1 }, bgcolor: 'rgba(0,0,0,0)',
+        };
+        if (!$('plot-acc').data) scene.camera = { eye: { x: 1.35, y: -1.9, z: 0.95 } };
+        layout = { paper_bgcolor: 'rgba(0,0,0,0)', margin: { l: 0, r: 0, t: 0, b: 0 }, showlegend: false, font: font, uirevision: 'acc3d', scene: scene };
+      } else {
+        layout = {
+          paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)', font: font, margin: { l: 52, r: 16, t: 10, b: 44 }, hovermode: 'x unified',
+          xaxis: { title: 'Round', range: [1, Math.max(2, total)], gridcolor: grid, zeroline: false },
+          yaxis: { title: 'Accuracy (%)', range: [lo, hi], gridcolor: grid, zeroline: false },
+          legend: { orientation: 'h', y: 1.1 }, uirevision: 'acc2d'
+        };
+      }
+      plot('plot-acc', traces, layout);
+    }
+
+    /* ===================================================================
+       RIGHT PANEL: KPIs, leaderboard, roster, results
+       =================================================================== */
+    function renderKpis() {
+      const ev = state.previewOnly ? null : latest();
+      if (!ev) {
+        ['kpi-round', 'kpi-leader', 'kpi-caught', 'kpi-false'].forEach(id => { $(id).textContent = '—'; });
+        return;
+      }
+      const md = inspectedData(ev);
+      const malSet = new Set(state.run.maliciousIds);
+      let leader = null;
+      Object.keys(ev.methods).forEach(m => { if (!leader || ev.methods[m].accuracy > ev.methods[leader].accuracy) leader = m; });
+      const caught = md.flagged.filter(i => malSet.has(i)).length;
+      const falseF = md.flagged.length - caught;
+      $('kpi-round').textContent = ev.round + ' / ' + state.run.config.rounds;
+      $('kpi-leader').textContent = short(leader) + ' ' + fmt(ev.methods[leader].accuracy) + '%';
+      $('kpi-caught').textContent = caught + ' / ' + malSet.size;
+      $('kpi-false').textContent = String(falseF);
+    }
+    function renderLeaderboard() {
+      const el = $('leaderboard');
+      const ev = state.previewOnly ? null : latest();
+      if (!ev) { el.innerHTML = '<div class="hint">Run a simulation to see the live ranking.</div>'; return; }
+      const arr = Object.keys(ev.methods).map(id => ({ id: id, acc: ev.methods[id].accuracy })).sort((a, b) => b.acc - a.acc);
+      const base = ev.methods['FedAvg'] ? ev.methods['FedAvg'].accuracy : null;
+      el.innerHTML = arr.map((x, i) => {
+        let delta = '';
+        if (base !== null && x.id !== 'FedAvg') {
+          const d = x.acc - base;
+          delta = ' <small class="' + (d >= 0 ? 'up' : 'down') + '">' + (d >= 0 ? '+' : '') + d.toFixed(1) + '</small>';
+        }
+        return '<div class="lb-row"><div class="lb-name"><span class="dot" style="background:' + color(x.id) + '"></span>' + (i === 0 ? ' ' : '') + short(x.id) +
+          '</div><div class="lb-bar"><div style="width:' + x.acc + '%;background:' + color(x.id) + '"></div></div><div class="lb-val">' + x.acc.toFixed(1) + '%' + delta + '</div></div>';
+      }).join('');
+    }
+    function renderRoster() {
+      const el = $('roster');
+      const { n, mal } = netSetup();
+      const malSet = new Set(mal);
+      const ev = state.previewOnly ? null : latest();
+      const md = inspectedData(ev);
+      $('roster-method').textContent = md ? '· ' + short(state.inspect) : '';
+      let maxW = 0;
+      if (md && md.weights) maxW = Math.max.apply(null, md.weights) || 1;
+      let html = '';
+      for (let i = 0; i < n; i++) {
+        const isMal = malSet.has(i);
+        const flag = md && md.flagged.indexOf(i) >= 0;
+        const atk = ev ? ev.attacks[String(i)] : null;
+        const info = isMal ? (ev ? (atk || '—') : 'attack starts on Run') : 'honest · normal training';
+        let wbar = '';
+        if (md && md.weights) wbar = '<div class="rs-w"><div style="width:' + (100 * md.weights[i] / maxW) + '%"></div></div>';
+        html += '<div class="rs-row' + (isMal ? ' mal' : '') + (flag ? ' flag' : '') + '">' +
+          '<span class="rs-id">H' + (i + 1) + '</span>' +
+          '<span class="badge ' + (isMal ? 'mal' : 'ok') + '">' + (isMal ? 'MALICIOUS' : 'HONEST') + '</span>' +
+          '<span class="rs-info"><span class="rs-attack">' + (isMal ? info : '<span style="color:#8b96b3">' + info + '</span>') + (flag ? ' ⚠' : '') + '</span>' + wbar + '</span>' +
+          '<span class="rs-z">' + (md ? 'z ' + md.z[i] : '') + '</span></div>';
+      }
+      el.innerHTML = html;
+    }
+    function renderFinal() {
+      const fin = state.finalEv;
+      if (!fin) return;
+      renderDelivery();
+      const mets = fin.metrics, ids = Object.keys(mets);
+      let bestAcc = -1;
+      ids.forEach(m => { bestAcc = Math.max(bestAcc, mets[m].classification.accuracy); });
+      let rows = '';
+      ids.forEach(m => {
+        const c = mets[m].classification, d = mets[m].detection;
+        rows += '<tr><td><span class="dot" style="background:' + color(m) + ';display:inline-block;margin-right:6px"></span>' + short(m) + '</td>' +
+          '<td class="' + (c.accuracy === bestAcc ? 'best' : '') + '">' + c.accuracy + '</td><td>' + c.precision + '</td><td>' + c.recall + '</td><td>' + c.f1_score + '</td>' +
+          '<td>' + d.detection_precision + '</td><td>' + d.detection_recall + '</td><td>' + d.detection_f1 + '</td><td>' + mets[m].variance + '</td></tr>';
+      });
+      $('metrics-table').innerHTML = '<table class="mt"><thead><tr><th></th>' +
+        '<th class="grp-c" colspan="4">' + dsInfo(runDataset()).task + ' prediction (%)</th><th class="grp-d" colspan="3">Malicious detection (%)</th><th></th></tr>' +
+        '<tr><th>Defense</th><th>Acc</th><th>Prec</th><th>Rec</th><th>F1</th><th>Prec</th><th>Rec</th><th>F1</th><th>Var</th></tr></thead><tbody>' + rows + '</tbody></table>';
+      $('btn-csv').disabled = false;
+
+      // plain-language insights
+      const sorted = ids.slice().sort((a, b) => mets[b].classification.accuracy - mets[a].classification.accuracy);
+      const best = sorted[0], bAcc = mets[best].classification.accuracy;
+      let p = '<p> <b>Best final accuracy:</b> ' + short(best) + ' at ' + bAcc + '%.</p>';
+      if (mets['FedAvg'] && best !== 'FedAvg') {
+        const d = bAcc - mets['FedAvg'].classification.accuracy;
+        p += '<p>That is <b>' + (d >= 0 ? '+' : '') + d.toFixed(2) + ' points</b> versus FedAvg (no defense).</p>';
+      } else if (best === 'FedAvg' && ids.length > 1) {
+        p += '<p>FedAvg (no defense) finished first here, so these attacks did little damage at this setting.</p>';
+      }
+      const A = mets['System A (Hard Exclusion)'], B = mets['System B (Soft Weighting)'];
+      if (A && B) {
+        const d = B.classification.accuracy - A.classification.accuracy;
+        p += '<p>Soft Weighting vs Hard Exclusion: <b>' + (d >= 0 ? '+' : '') + d.toFixed(2) + ' points</b> for Soft Weighting.</p>';
+      }
+      const cfgAtk = (state.run && state.run.config.attack_types) || [];
+      if (cfgAtk.indexOf('sybil') >= 0 || cfgAtk.indexOf('clean_label_backdoor') >= 0 || cfgAtk.indexOf('dirty_label_backdoor') >= 0) {
+        p += '<p class="warn">Note: Sybil and backdoor attacks do not look like outliers, so the distance-based detector is not expected to catch them.</p>';
+      }
+      p += '<p style="color:#8b96b3">One run on a small dataset (' + dsInfo(runDataset()).patients + ' patients). Repeat with other settings before claiming a winner.</p>';
+      $('insights').innerHTML = '<div class="insights">' + p + '</div>';
+    }
+    function downloadCsv() {
+      if (!state.finalEv) return;
+      const mets = state.finalEv.metrics;
+      let csv = 'defense,accuracy,precision,recall,f1,detection_precision,detection_recall,detection_f1,variance\n';
+      Object.keys(mets).forEach(m => {
+        const c = mets[m].classification, d = mets[m].detection;
+        csv += [JSON.stringify(m), c.accuracy, c.precision, c.recall, c.f1_score, d.detection_precision, d.detection_recall, d.detection_f1, mets[m].variance].join(',') + '\n';
+      });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+      a.download = 'fl_results.csv';
+      a.click();
+    }
+
+    /* ===================================================================
+       RUN / STREAM / PLAYBACK
+       =================================================================== */
+    function resetRunState() {
+      state.run = null; state.queue = []; state.streamDone = false; state.finalEv = null; state.previewOnly = false;
+      state.live = false; state.attackLog = []; state.delivery = null;
+      $('metrics-table').innerHTML = ''; $('insights').innerHTML = ''; $('btn-csv').disabled = true;
+      $('delivery').innerHTML = ''; renderFeed(); renderAttackNow();
+    }
+    function renderAll() {
+      updateProgress(); drawNetwork(); drawTopology(); drawAcc(); renderLeaderboard(); renderKpis(); renderRoster(); renderAttackNow();
+    }
+    function enterRun(config, maliciousIds, methods) {
+      state.run = { config: config, maliciousIds: maliciousIds, methods: methods, rounds: [] };
+      state.dataset = (config.dataset && DATASETS[config.dataset]) ? config.dataset : 'pima';
+      updateDatasetUI();
+      state.previewOnly = false;
+      if (methods.indexOf(state.inspect) < 0) state.inspect = methods.indexOf('System B (Soft Weighting)') >= 0 ? 'System B (Soft Weighting)' : methods[0];
+      refreshInspect();
+      if (hasPlotly()) Plotly.purge($('plot-acc'));
+      renderAll();
+    }
+    function applyEvent(ev) {
+      if (ev.type === 'lobby') {
+        enterRun(ev.config, [], ev.config.selected_methods);
+        if (state.live) { $('btn-begin').disabled = false; }
+        setStatus('Lobby: waiting for the attacker. Press "Begin rounds" when you are ready.');
+      } else if (ev.type === 'start') {
+        enterRun(ev.config, ev.malicious_ids, ev.methods);
+        if (state.live) $('btn-begin').disabled = true;
+        setStatus(state.live ? 'Live: rounds are running. Waiting for attacks…' : 'Running… hospitals are training and sending updates');
+      } else if (ev.type === 'attack') {
+        state.attackLog.unshift(ev);
+        renderFeed();
+        setStatus(ev.attack ? 'ATTACK: ' + attackName(ev.attack) + ' on H' + (ev.hospital + 1) + ' (' + ev.actor + '), counts from round ' + ev.effective_round
+          : 'Attack on H' + (ev.hospital + 1) + ' stopped by ' + ev.actor);
+      } else if (ev.type === 'round') {
+        state.run.rounds.push(ev);
+        if (ev.malicious_ids) state.run.maliciousIds = ev.malicious_ids;       // who is attacked THIS round
+        renderAll();
+        const best = ev.best ? ' · best model: ' + short(ev.best.method) + ' ' + fmt(ev.best.accuracy) + '% → sent to all hospitals' : '';
+        const nAtk = Object.keys(ev.attacks || {}).length;
+        setStatus('Round ' + ev.round + ' of ' + state.run.config.rounds + ' · ' + (nAtk ? nAtk + ' hospital' + (nAtk > 1 ? 's' : '') + ' under attack' : 'no attacks') + best);
+      } else if (ev.type === 'session') {
+        state.liveStatus = ev.status;
+        $('btn-pause').textContent = ev.status === 'paused' ? '▶ Resume' : '⏸ Pause';
+        if (ev.status === 'paused') setStatus('Session paused');
+      } else if (ev.type === 'delivery') {
+        state.delivery = ev;
+        renderDelivery();
+      } else if (ev.type === 'final') {
+        state.finalEv = ev;
+      } else if (ev.type === 'error') {
+        setStatus('⚠ Server error: ' + ev.message);
+        state.queue = [];
+        finishRun(true);
+      }
+    }
+    function speedDelay() { return state.live ? 0 : SPEED_DELAYS[+$('sl-speed').value - 1]; }
+    function tick() {
+      if (!state.running) return;
+      if (state.paused) { state.timer = setTimeout(tick, 150); return; }
+      while (state.queue.length && state.queue[0].type !== 'round') {
+        applyEvent(state.queue.shift());
+        if (!state.running) return;
+      }
+      let delay = 50;
+      if (state.queue.length) { applyEvent(state.queue.shift()); delay = speedDelay(); }
+      else if (state.streamDone) { finishRun(false); return; }
+      if (!state.running) return;
+      state.timer = setTimeout(tick, delay);
+    }
+    function finishRun(failed) {
+      clearTimeout(state.timer);
+      setRunning(false);
+      rerollForNextRun();
+      if (!failed) {
+        if (state.finalEv) {
+          setStatus('✅ Finished · the best model was sent back to every hospital · open the Results tab');
+          renderFinal();
+          showTab('metrics');
+        } else {
+          setStatus('⏹ The live session ended before it finished.');
+        }
+        loadHistory();
+      }
+    }
+    async function startRun() {
+      if (state.methods.size === 0) { setStatus('Pick at least one defense on the left.'); return; }
+      updateNodeLabels();            // makes sure the random set matches the sliders
+      const cfgUi = currentCfg();
+      if (cfgUi.mal > 0 && state.attacks.size === 0) { setStatus('Pick at least one attack on the left.'); return; }
+      const payload = {
+        dataset: state.dataset, rounds: cfgUi.rounds, num_hospitals: cfgUi.nodes, num_malicious: state.malIds.length, malicious_ids: state.malIds.slice(),
+        selected_methods: Array.from(state.methods), attack_types: Array.from(state.attacks),
+      };
+      setStatus('Connecting to the backend…');
+      const bk = await checkBackend();
+      if (!bk.ok) {
+        setStatus(bk.reason === 'old'
+          ? '⚠ A backend is running, but it is the OLD version (no live endpoint). Replace ALL project files with the new zip, stop the server (Ctrl+C) and run: python main.py'
+          : '⚠ Backend not found. In the project folder run:  python main.py  then press Run again. (Tried http://127.0.0.1:8000)');
+        return;
+      }
+      resetRunState();
+      showTab('live');
+      setRunning(true);
+      setStatus('Starting simulation…');
+      state.abort = new AbortController();
+      tick();
+      try {
+        const resp = await fetch(API + '/api/simulate/stream', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), signal: state.abort.signal
+        });
+        if (!resp.ok) throw new Error('Server returned ' + resp.status);
+        const reader = resp.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+        while (true) {
+          const chunk = await reader.read();
+          if (chunk.done) break;
+          buf += dec.decode(chunk.value, { stream: true });
+          let idx;
+          while ((idx = buf.indexOf('\n')) >= 0) {
+            const line = buf.slice(0, idx).trim();
+            buf = buf.slice(idx + 1);
+            if (line) state.queue.push(JSON.parse(line));
+          }
+        }
+        if (buf.trim()) state.queue.push(JSON.parse(buf.trim()));
+        state.streamDone = true;
+      } catch (err) {
+        if (err && err.name === 'AbortError') return;
+        state.queue = [];
+        let why = 'Lost the connection to the backend (is python main.py still running?)';
+        if (err instanceof SyntaxError) why = 'The server sent data the page could not read.';
+        else if (err && /Server returned/.test(String(err.message))) why = String(err.message) + ' — restart the backend (Ctrl+C, then python main.py).';
+        setStatus('⚠ ' + why);
+        finishRun(true);
+      }
+    }
+    function togglePause() {
+      if (state.live) { liveControl(state.liveStatus === 'paused' ? 'resume' : 'pause'); return; }   // the server pauses the rounds
+      state.paused = !state.paused;
+      $('btn-pause').textContent = state.paused ? '▶ Resume' : '⏸ Pause';
+      setStatus(state.paused ? 'Paused' : 'Running…');
+    }
+    function stopRun() {
+      if (state.live) liveControl('stop');
+      if (state.abort) state.abort.abort();
+      state.queue = [];
+      clearTimeout(state.timer);
+      setRunning(false);
+      rerollForNextRun();
+      setStatus('⏹ Stopped. Showing the rounds completed so far.');
+    }
+
+    /* ===================================================================
+       HISTORY (SQLite)
+       =================================================================== */
+    async function loadHistory() {
+      const el = $('history-list');
+      try {
+        const resp = await fetch(API + '/api/runs');
+        const data = await resp.json();
+        if (!data.runs.length) { el.innerHTML = '<div class="hint">No saved runs yet. Finish a simulation and it appears here.</div>'; return; }
+        el.innerHTML = data.runs.map(r => {
+          const c = r.config;
+          return '<div class="hist-item"><div><b>Run #' + r.id + '</b> · ' + r.created_at + ' UTC</div>' +
+            '<div class="sm">' + dsInfo(c.dataset).label + (c.live ? ' · live session' : '') + '</div>' +
+            '<div class="sm">' + c.num_hospitals + ' hospitals · ' + c.num_malicious + ' malicious' + (c.malicious_ids ? ' (' + c.malicious_ids.map(i => 'H' + (i + 1)).join(', ') + ')' : '') + ' · ' + c.rounds + ' rounds</div>' +
+            '<div class="sm">Attacks: ' + c.attack_types.join(', ') + '</div>' +
+            '<div>Best: <b>' + (r.best_method ? short(r.best_method) : '—') + '</b> ' + (r.best_acc !== null ? r.best_acc + '%' : '') + '</div>' +
+            '<div class="acts"><button class="mini" onclick="replayRun(' + r.id + ')">▶ Replay</button><button class="mini" onclick="deleteRun(' + r.id + ')">🗑 Delete</button></div></div>';
+        }).join('');
+      } catch (e) {
+        el.innerHTML = '<div class="hint">History unavailable — the backend is not running.</div>';
+      }
+    }
+    async function replayRun(id) {
+      if (state.running) return;
+      try {
+        const resp = await fetch(API + '/api/runs/' + id);
+        const run = await resp.json();
+        resetRunState();
+        showTab('live');
+        setRunning(true);
+        state.queue = run.events.slice();
+        state.streamDone = true;
+        setStatus('Replaying saved run #' + id);
+        tick();
+      } catch (e) {
+        setStatus('⚠ Could not load that run.');
+      }
+    }
+    async function deleteRun(id) {
+      try { await fetch(API + '/api/runs/' + id, { method: 'DELETE' }); } catch (e) { }
+      loadHistory();
+    }
+
+    /* ===================================================================
+       LIVE SESSION (attacker on another computer)
+       =================================================================== */
+    function buildModeChips() {
+      const box = $('mode-chips'); box.innerHTML = '';
+      [['single', 'Single screen', '#5eead4'], ['live', 'Live · 2 computers', '#ff4d6d']].forEach(m => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'chip' + (state.mode === m[0] ? ' on' : ''); b.dataset.id = m[0];
+        b.style.setProperty('--c', m[2]); b.innerHTML = '<i></i>' + m[1];
+        b.onclick = () => { if (!state.running) setMode(m[0]); };
+        box.appendChild(b);
+      });
+    }
+    function setMode(m) {
+      state.mode = m;
+      Array.prototype.forEach.call($('mode-chips').children, b => b.classList.toggle('on', b.dataset.id === m));
+      const live = m === 'live';
+      $('grp-live').classList.toggle('hidden', !live);
+      ['field-mal', 'field-speed', 'grp-attacks'].forEach(id => $(id).classList.toggle('hidden', live));
+      $('btn-begin').classList.toggle('hidden', !live);
+      $('btn-run').textContent = live ? '🔌 Open live session' : '▶ Run simulation';
+      $('mode-note').textContent = live
+        ? 'Two people, two computers: the attacker gives attacks to hospitals from the other computer, and you watch the result here.'
+        : 'Everything on this one screen: the malicious hospitals and their attacks are picked here.';
+      if (!state.running) { state.previewOnly = true; drawNetwork(); drawTopology(); renderRoster(); renderKpis(); }
+      if (live) { refreshAttackerUrl(); checkLiveSession(); }
+    }
+    async function refreshAttackerUrl() {
+      let urls = [];
+      try {
+        const r = await fetch(API + '/api/network');
+        if (r.ok) { const j = await r.json(); urls = j.urls || []; }
+      } catch (e) { }
+      if (!urls.length) urls = [location.origin + '/attacker'];
+      state.attackerUrl = urls[0];
+      $('attacker-url').textContent = urls.join('\n');
+    }
+    function copyAttackerUrl() {
+      try { navigator.clipboard.writeText(state.attackerUrl); setStatus('Address copied: ' + state.attackerUrl); }
+      catch (e) { setStatus('Select the address and copy it by hand: ' + state.attackerUrl); }
+    }
+    function onDelayChange() {
+      const v = +$('sl-delay').value;
+      $('val-delay').textContent = v.toFixed(1);
+      paintRange($('sl-delay'));
+      if (state.live && state.running) liveControl('delay', v);
+    }
+    async function livePost(path, body) {
+      const r = await fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!r.ok) { let d = ''; try { d = (await r.json()).detail; } catch (e) { } throw new Error(d || ('Server returned ' + r.status)); }
+      return r.json();
+    }
+    async function liveControl(action, delay) {
+      try { await livePost('/api/live/control', { action: action, delay_s: (delay === undefined ? null : delay) }); }
+      catch (e) { setStatus('⚠ ' + e.message); }
+    }
+    async function openLive() {
+      if (state.methods.size === 0) { setStatus('Pick at least one defense on the left.'); return; }
+      setStatus('Connecting to the backend…');
+      const bk = await checkBackend();
+      if (!bk.ok) {
+        setStatus(bk.reason === 'old'
+          ? '⚠ A backend is running, but it is the OLD version. Replace ALL project files with the new zip, stop the server (Ctrl+C) and run: python main.py'
+          : '⚠ Backend not found. In the project folder run:  python main.py  then press the button again.');
+        return;
+      }
+      const c = currentCfg();
+      try {
+        await livePost('/api/live/open', {
+          dataset: state.dataset, rounds: c.rounds, num_hospitals: c.nodes,
+          selected_methods: Array.from(state.methods), delay_s: +$('sl-delay').value
+        });
+      } catch (e) { setStatus('⚠ Could not open the session: ' + e.message); return; }
+      await joinLive();
+    }
+    async function beginLive() {
+      $('btn-begin').disabled = true;
+      await liveControl('begin');
+    }
+    async function joinLive() {
+      resetRunState();
+      showTab('live');
+      state.live = true;
+      setRunning(true);
+      $('btn-begin').disabled = true;
+      $('btn-join').classList.add('hidden');
+      setStatus('Live session open. Waiting for the attacker to join…');
+      state.abort = new AbortController();
+      tick();
+      try {
+        const resp = await fetch(API + '/api/live/stream', { signal: state.abort.signal });
+        if (!resp.ok) throw new Error('Server returned ' + resp.status);
+        const reader = resp.body.getReader();
+        const dec = new TextDecoder();
+        let buf = '';
+        while (true) {
+          const chunk = await reader.read();
+          if (chunk.done) break;
+          buf += dec.decode(chunk.value, { stream: true });
+          let idx;
+          while ((idx = buf.indexOf('\n')) >= 0) {
+            const line = buf.slice(0, idx).trim();
+            buf = buf.slice(idx + 1);
+            if (line) { const ev = JSON.parse(line); if (ev.type !== 'ping') state.queue.push(ev); }
+          }
+        }
+        state.streamDone = true;
+      } catch (err) {
+        if (err && err.name === 'AbortError') return;
+        state.queue = [];
+        setStatus('⚠ Lost the live connection: ' + (err && err.message ? err.message : 'unknown error'));
+        finishRun(true);
+      }
+    }
+    async function checkLiveSession() {
+      if (state.mode !== 'live' || state.running) { $('btn-join').classList.add('hidden'); return; }
+      try {
+        const r = await fetch(API + '/api/live/state');
+        const st = await r.json();
+        const active = st.exists && ['lobby', 'running', 'paused'].indexOf(st.status) >= 0;
+        $('btn-join').classList.toggle('hidden', !active);
+        if (active) $('btn-join').textContent = 'Join the running session (' + st.status + ', round ' + st.round + '/' + st.rounds + ')';
+      } catch (e) { $('btn-join').classList.add('hidden'); }
+    }
+    function renderAttackNow() {
+      const el = $('attack-now');
+      const ev = state.previewOnly ? null : latest();
+      if (!ev) { el.className = 'alert-box'; el.textContent = 'No attacks yet.'; return; }
+      const ids = Object.keys(ev.attacks || {}).map(Number).sort((a, b) => a - b);
+      if (!ids.length) { el.className = 'alert-box ok'; el.textContent = '✅ No hospital is under attack right now.'; return; }
+      el.className = 'alert-box bad';
+      el.innerHTML = '<b>⚠ ' + ids.length + ' hospital' + (ids.length > 1 ? 's' : '') + ' under attack</b>' +
+        ids.map(i => '<div>H' + (i + 1) + ' ← <b>' + attackName(ev.attacks[String(i)]) + '</b></div>').join('');
+    }
+    function renderFeed() {
+      const el = $('feed-list');
+      if (!state.attackLog.length) { el.innerHTML = '<div class="hint">No attack has been given yet.</div>'; return; }
+      el.innerHTML = state.attackLog.map(e => '<div class="feed-item ' + (e.attack ? 'atk' : 'clr') + '">' +
+        (e.attack ? '<b>H' + (e.hospital + 1) + '</b> ← ' + attackName(e.attack) : '<b>H' + (e.hospital + 1) + '</b>: attack stopped') +
+        '<small>by ' + e.actor + ' · counts from round ' + e.effective_round + '</small></div>').join('');
+    }
+    function renderDelivery() {
+      const d = state.delivery, el = $('delivery');
+      if (!d) { el.innerHTML = ''; return; }
+      const rows = d.hospitals.map(h => {
+        const gain = h.delivered_acc - h.alone_acc;
+        return '<tr><td>H' + (h.id + 1) + (h.attacked ? ' <span class="tag">attacked</span>' : '') + '</td><td>' + h.alone_acc + '</td><td>' + h.delivered_acc +
+          '</td><td class="' + (gain >= 0 ? 'up' : 'down') + '">' + (gain >= 0 ? '+' : '') + gain.toFixed(1) + '</td></tr>';
+      }).join('');
+      el.innerHTML = '<div class="delivery"><div class="dl-head">🏆 Best model: <b>' + short(d.best_method) + '</b> · ' + d.accuracy + '% accuracy</div>' +
+        '<div class="hint" style="margin:0 0 8px">Sent back to all ' + d.hospitals.length + ' hospitals for their next training round. ' +
+        '"Alone" is what each hospital reaches by training only on its own patients (same test set).</div>' +
+        '<table class="mt"><thead><tr><th>Hospital</th><th>Alone %</th><th>Model received %</th><th>Gain</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+        '<div style="margin-top:10px"><button class="mini" id="btn-model" type="button">⬇ Download the model (JSON)</button></div></div>';
+      $('btn-model').onclick = downloadModel;
+    }
+    function downloadModel() {
+      if (!state.delivery) return;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(state.delivery.model, null, 2)], { type: 'application/json' }));
+      a.download = 'best_model.json';
+      a.click();
+    }
+
+    /* ===================================================================
+       AUTO-ROTATE + STARTUP
+       =================================================================== */
+    let angle = 0.6;
+    setInterval(() => {
+      if (!state.rotate || !hasPlotly()) return;
+      const el = $('plot-net');
+      if (!el.data) return;
+      angle += 0.012;
+      Plotly.relayout(el, { 'scene.camera.eye': { x: 2.0 * Math.cos(angle), y: 2.0 * Math.sin(angle), z: 0.85 } });
+    }, 70);
+
+    async function probeBackend(base) {
+      const ctl = new AbortController();
+      const t = setTimeout(() => ctl.abort(), 2500);
+      try {
+        const r = await fetch(base + '/api/options', { signal: ctl.signal });
+        if (!r.ok) return null;
+        const j = await r.json();
+        return (j && j.methods) ? { base: base, live: !!j.live } : null;
+      } catch (e) { return null; }
+      finally { clearTimeout(t); }
+    }
+    async function detectBackend() {
+      // Works wherever the page is opened from (FastAPI at :8000, VS Code Live Server,
+      // or a double-clicked file). Add ?api=http://127.0.0.1:PORT to the URL to force one.
+      const q = new URLSearchParams(location.search).get('api');
+      const cands = [];
+      if (q) cands.push(q.replace(/\/$/, ''));
+      if (location.protocol.startsWith('http')) cands.push('');
+      cands.push('http://127.0.0.1:8000', 'http://localhost:8000');
+      const seen = {};
+      for (const base of cands) {
+        if (seen[base]) continue;
+        seen[base] = true;
+        const found = await probeBackend(base);
+        if (found) { API = found.base; backendInfo = found; return found; }
+      }
+      backendInfo = null;
+      return null;
+    }
+    async function checkBackend() {
+      const pill = $('backend-pill');
+      const found = await detectBackend();
+      if (!found) {
+        pill.textContent = '● Backend not found — start it: python main.py'; pill.className = 'pill bad';
+        return { ok: false, reason: 'missing' };
+      }
+      if (!found.live) {
+        pill.textContent = '● Old backend version — replace all files & restart'; pill.className = 'pill warn';
+        return { ok: false, reason: 'old' };
+      }
+      pill.textContent = '● Backend online · ' + (API || location.host).replace('http://', ''); pill.className = 'pill ok';
+      return { ok: true };
+    }
+    function init() {
+      if (!hasPlotly()) {
+        setStatus('⚠ The charting library could not load (internet needed once). Refresh when online.');
+      }
+      buildChips();
+      buildDatasetChips();
+      bindControls();
+      updateNodeLabels();
+      refreshInspect();
+      updateRotateBtn();
+      drawNetwork();
+      drawTopology();
+      drawAcc();
+
+      renderLeaderboard();
+      renderKpis();
+      renderRoster();
+      updateProgress();
+      buildModeChips();
+      setMode('single');
+      renderFeed();
+      renderAttackNow();
+      checkBackend().then(loadHistory);
+      setInterval(checkLiveSession, 3000);
+    }
+    init();
+  </script>
+</body>
+
+</html>

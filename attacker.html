@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attacker Console · Hospital FL Security Lab</title>
+<style>
+:root{
+  --bg:#0b0710; --card:rgba(255,255,255,.045); --bd:rgba(255,255,255,.1);
+  --tx:#f1e9f3; --mut:#a698ae; --ac:#ff4d6d; --ac2:#ff9a5c; --ok:#22d3a0; --warn:#ffd166;
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--tx);font-family:Inter,'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;min-height:100vh;
+  background:radial-gradient(1000px 520px at 5% -10%,rgba(255,77,109,.28),transparent),
+             radial-gradient(900px 500px at 100% 0,rgba(255,154,92,.18),transparent),var(--bg)}
+button,input{font-family:inherit}
+.topbar{display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--bd);background:rgba(11,7,16,.65);backdrop-filter:blur(10px)}
+.logo{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:20px;background:linear-gradient(135deg,var(--ac),var(--ac2));box-shadow:0 6px 22px rgba(255,77,109,.4)}
+.topbar h1{margin:0;font-size:18px}.topbar p{margin:2px 0 0;color:var(--mut);font-size:12px}
+.spacer{flex:1}
+.pill{padding:6px 12px;border-radius:999px;font-size:12px;border:1px solid var(--bd);background:var(--card);color:var(--mut)}
+.pill.ok{color:var(--ok);border-color:rgba(34,211,160,.4)}.pill.bad{color:var(--ac);border-color:rgba(255,77,109,.5)}.pill.warn{color:var(--warn);border-color:rgba(255,209,102,.5)}
+.layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;padding:16px 22px 30px;align-items:start}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;margin-bottom:16px}
+.panel h3{margin:0 0 12px;font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut);font-weight:600}
+.panel h3 b{color:var(--ac);margin-right:6px}
+.hint{color:var(--mut);font-size:12px;line-height:1.5;margin-top:8px}
+input[type=text],input[type=number]{background:rgba(255,255,255,.06);border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:8px 10px;font-size:13px}
+input[type=number]{width:64px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;cursor:pointer;border:1px solid var(--bd);background:rgba(255,255,255,.03);color:var(--mut);font-size:12.5px;transition:.15s}
+.chip i{width:9px;height:9px;border-radius:50%;background:var(--ac);opacity:.5}
+.chip:hover{color:var(--tx);border-color:rgba(255,255,255,.25)}
+.chip.on{color:var(--tx);border-color:var(--ac);background:rgba(255,77,109,.12);box-shadow:0 0 16px -5px var(--ac)}
+.chip.on i{opacity:1;box-shadow:0 0 8px var(--ac)}
+.chip.clear i{background:var(--ok)}.chip.clear.on{border-color:var(--ok);background:rgba(34,211,160,.1);box-shadow:0 0 16px -5px var(--ok)}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.mini{border:1px solid var(--bd);background:rgba(255,255,255,.05);color:var(--tx);border-radius:9px;padding:7px 11px;font-size:12px;cursor:pointer}
+.mini:hover:not(:disabled){background:rgba(255,255,255,.12)}.mini:disabled{opacity:.4;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+.host{border:1px solid var(--bd);background:rgba(255,255,255,.035);border-radius:13px;padding:11px 10px;cursor:pointer;transition:.15s;position:relative;min-height:74px}
+.host:hover{border-color:rgba(255,255,255,.28)}
+.host .id{font-size:17px;font-weight:700}
+.host .st{font-size:11.5px;margin-top:4px;color:var(--ok);word-break:break-word}
+.host.sel{outline:2px solid var(--warn);outline-offset:1px}
+.host.atk{border-color:rgba(255,77,109,.6);background:rgba(255,77,109,.1)}
+.host.atk .st{color:#ff9fb0}
+.host .det{position:absolute;top:7px;right:8px;font-size:10px;font-weight:700;color:var(--warn);background:rgba(255,209,102,.14);border-radius:99px;padding:2px 7px}
+.host.off{opacity:.45;cursor:not-allowed}
+.btn{border:0;border-radius:12px;padding:14px 18px;font-weight:700;cursor:pointer;font-size:15px;width:100%;color:#fff;background:linear-gradient(135deg,var(--ac),var(--ac2));box-shadow:0 8px 26px rgba(255,77,109,.35);transition:.15s}
+.btn:hover:not(:disabled){transform:translateY(-1px);filter:brightness(1.08)}
+.btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn.clear{background:linear-gradient(135deg,#16a37f,var(--ok));box-shadow:0 8px 26px rgba(34,211,160,.25);color:#04201a}
+.bar{height:8px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden;margin:10px 0 6px}
+.bar div{height:100%;width:0;background:linear-gradient(90deg,var(--ac),var(--ac2));transition:width .3s}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.stat{background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:12px;padding:10px 12px}
+.stat small{display:block;color:var(--mut);font-size:11px;margin-bottom:3px}.stat b{font-size:20px;font-variant-numeric:tabular-nums}
+.stat.r b{color:var(--ac)}.stat.a b{color:var(--warn)}
+.active-row{display:flex;justify-content:space-between;gap:8px;padding:8px 10px;border-radius:10px;margin-bottom:6px;background:rgba(255,77,109,.08);border:1px solid rgba(255,77,109,.3);font-size:12.5px}
+.active-row span:last-child{color:var(--warn);font-weight:700}
+.log{max-height:300px;overflow-y:auto;padding-right:4px}
+.log div{padding:7px 9px;border-left:3px solid var(--bd);margin-bottom:6px;font-size:12.5px;background:rgba(255,255,255,.03);border-radius:0 8px 8px 0}
+.log div.atk{border-color:var(--ac)}.log div.clr{border-color:var(--ok)}.log div.sys{border-color:var(--warn)}
+.log small{color:var(--mut);display:block;font-size:11px}
+.wait{padding:26px;text-align:center;color:var(--mut);line-height:1.7}
+.wait b{color:var(--tx)}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1b1222;border:1px solid var(--ac);padding:12px 18px;border-radius:12px;font-size:13px;z-index:30;display:none;max-width:90vw}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  
+  <div><h1>Attacker console</h1><p>Give attacks to hospitals while the defender watches on the other computer</p></div>
+  <div class="spacer"></div>
+  <span class="pill" id="session-pill">No session</span>
+  <span class="pill" id="backend-pill">Connecting…</span>
+</div>
+
+<div class="layout">
+  <section>
+    <div class="panel" id="waiting-box">
+      <div class="wait"><b>Waiting for the defender to open a live session…</b><br>
+        On the monitor computer choose <b>Live session</b> and press <b>Open session</b>. This page joins automatically.</div>
+    </div>
+
+    <div id="controls" style="display:none">
+      <div class="panel">
+        <h3><b>1</b>Your name</h3>
+        <input type="text" id="inp-name" value="Attacker" maxlength="30">
+        <div class="hint">Shown to the defender next to every attack you launch.</div>
+      </div>
+
+      <div class="panel">
+        <h3><b>2</b>Choose the attack</h3>
+        <div class="chips" id="attack-chips"></div>
+        <div class="hint" id="attack-desc"></div>
+      </div>
+
+      <div class="panel">
+        <h3><b>3</b>Choose the hospitals</h3>
+        <div class="toolbar">
+          <button class="mini" id="btn-all" type="button">Select all</button>
+          <button class="mini" id="btn-none" type="button">Clear selection</button>
+          <span style="color:var(--mut);font-size:12px;margin-left:6px">or pick</span>
+          <input type="number" id="inp-k" value="3" min="1" max="39">
+          <button class="mini" id="btn-random" type="button">🎲 random hospitals</button>
+        </div>
+        <div class="grid" id="host-grid"></div>
+        <div class="hint">Click hospitals to select them. A red card means that hospital is under attack right now.
+          <b style="color:var(--warn)">⚠ detected</b> means the defense has noticed it.</div>
+      </div>
+
+      <div class="panel">
+        <h3><b>4</b>Launch</h3>
+        <button class="btn" id="btn-launch" type="button" disabled>Pick an attack and at least one hospital</button>
+        <div class="hint" id="launch-hint">An attack starts from the next round that has not begun yet. You can change or stop attacks at any time while the session runs.</div>
+      </div>
+    </div>
+  </section>
+
+  <aside>
+    <div class="panel">
+      <h3>Session</h3>
+      <div id="status-text">Not connected to a session.</div>
+      <div class="bar"><div id="progress-fill"></div></div>
+      <div id="round-text" style="color:var(--mut);font-size:12px">Round 0 / 0</div>
+      <div class="stats">
+        <div class="stat r"><small>Hospitals under attack</small><b id="stat-active">0</b></div>
+        <div class="stat a"><small>Noticed by the defense</small><b id="stat-caught">0</b></div>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>Attacks happening now</h3>
+      <div id="active-list"><div class="hint" style="margin:0">None yet.</div></div>
+    </div>
+    <div class="panel">
+      <h3>Action log</h3>
+      <div class="log" id="log-list"></div>
+    </div>
+  </aside>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================================================================
+   SETTINGS
+   =================================================================== */
+const ATTACKS = [
+  {id:'gradient_scaling',         label:'Gradient Scaling',     desc:'Multiplies its update x10 so it dominates the average.'},
+  {id:'sign_flipping',            label:'Sign Flipping',        desc:'Sends the exact opposite of its real update.'},
+  {id:'sybil',                    label:'Sybil Collusion',      desc:'Hospitals you pick together send the SAME colluding update (pick 2 or more).'},
+  {id:'free_rider',               label:'Free-Rider',           desc:'Does no training and submits noise.'},
+  {id:'clean_label_backdoor',     label:'Clean-Label Backdoor', desc:'Hidden trigger in the data while the labels stay correct.'},
+  {id:'dirty_label_backdoor',     label:'Dirty-Label Backdoor', desc:'Hidden trigger plus a forced wrong label.'},
+  {id:'gradient_inversion_probe', label:'Gradient Inversion Probe', desc:'Passive: tries to rebuild patient data from the gradient. Accuracy is not affected.'},
+  {id:'label_flipping',           label:'Label Flipping',       desc:'Trains on swapped diagnoses.'},
+  {id:'gaussian_noise',           label:'Gaussian Noise',       desc:'Its update is corrupted with random noise.'},
+  {id:'byzantine',                label:'Byzantine',            desc:'Arbitrary extreme values every round (worst case).'},
+];
+const CLEAR = '__clear';
+const $ = id => document.getElementById(id);
+const range = n => Array.from({length:n}, (_, i) => i);
+let API = '';
+
+const S = {
+  sid: null, streaming: false, n: 0, rounds: 0, round: 0, status: 'waiting', methods: [], ref: null,
+  assign: {}, detected: new Set(), selected: new Set(), attack: null, log: [],
+};
+const ACTIVE = () => ['lobby', 'running', 'paused'].indexOf(S.status) >= 0;
+
+/* ===================================================================
+   SAME "random, not side by side" rule as the monitor screen
+   =================================================================== */
+function binom(m, r){ if(r < 0 || r > m) return 0; r = Math.min(r, m - r); let res = 1; for(let i = 1; i <= r; i++) res = res * (m - r + i) / i; return Math.round(res); }
+function ringPlacements(n, k){ if(k === 0) return 1; if(k > Math.floor(n / 2)) return 0; return Math.round(n * binom(n - k, k) / (n - k)); }
+function randomPlacement(n, k, rand){
+  rand = rand || Math.random;
+  k = Math.max(0, Math.min(n - 1, Math.floor(k)));
+  if(k === 0) return [];
+  const pick = (m, count) => { const pool = range(m); for(let i = pool.length - 1; i > 0; i--){ const j = Math.floor(rand() * (i + 1)); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; } return pool.slice(0, count).sort((x, y) => x - y); };
+  if(ringPlacements(n, k) >= 20){
+    const extra = n - 2 * k, cuts = pick(extra + k - 1, k - 1), bins = []; let prev = -1;
+    cuts.concat([extra + k - 1]).forEach(c => { bins.push(c - prev - 1); prev = c; });
+    let pos = Math.floor(rand() * n); const out = [];
+    for(let i = 0; i < k; i++){ out.push(pos % n); pos += 2 + bins[i]; }
+    return out.sort((x, y) => x - y);
+  }
+  return pick(n, k);
+}
+
+/* ===================================================================
+   HELPERS
+   =================================================================== */
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.style.display = 'block'; clearTimeout(toast._t); toast._t = setTimeout(() => { t.style.display = 'none'; }, 4200); }
+function addLog(text, kind, sub){ S.log.unshift({text:text, kind:kind || '', sub:sub || ''}); if(S.log.length > 80) S.log.pop(); renderLog(); }
+async function api(path, opts){
+  const r = await fetch(API + path, opts);
+  if(!r.ok){ let d = ''; try{ d = (await r.json()).detail; } catch(e){} throw new Error(d || ('Server returned ' + r.status)); }
+  return r.json();
+}
+const post = (path, body) => api(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+const hName = i => 'H' + (i + 1);
+const attackLabel = id => (ATTACKS.find(a => a.id === id) || {label:id}).label;
+
+/* ===================================================================
+   RENDERING
+   =================================================================== */
+function buildAttackChips(){
+  const box = $('attack-chips'); box.innerHTML = '';
+  ATTACKS.concat([{id:CLEAR, label:'✋ Stop attack (set honest)', desc:'Removes the attack from the hospitals you select.'}]).forEach(a => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip' + (a.id === CLEAR ? ' clear' : ''); b.dataset.id = a.id;
+    b.innerHTML = '<i></i>' + a.label;
+    b.onclick = () => { S.attack = a.id; renderChips(); renderLaunch(); };
+    box.appendChild(b);
+  });
+}
+function renderChips(){
+  Array.prototype.forEach.call($('attack-chips').children, b => b.classList.toggle('on', b.dataset.id === S.attack));
+  const a = ATTACKS.find(x => x.id === S.attack);
+  $('attack-desc').textContent = S.attack === CLEAR ? 'Removes the attack from the hospitals you select.' : (a ? a.desc : 'Pick an attack above.');
+}
+function renderGrid(){
+  const grid = $('host-grid'); grid.innerHTML = '';
+  range(S.n).forEach(i => {
+    const d = document.createElement('div');
+    const atk = S.assign[i];
+    d.className = 'host' + (atk ? ' atk' : '') + (S.selected.has(i) ? ' sel' : '') + (ACTIVE() ? '' : ' off');
+    d.dataset.id = String(i);
+    d.innerHTML = '<div class="id">' + hName(i) + '</div><div class="st">' + (atk ? '⚔ ' + attackLabel(atk) : 'honest') + '</div>' +
+      (atk && S.detected.has(i) ? '<span class="det">⚠ detected</span>' : '');
+    d.onclick = () => { if(!ACTIVE()) return; if(S.selected.has(i)) S.selected.delete(i); else S.selected.add(i); renderGrid(); renderLaunch(); };
+    grid.appendChild(d);
+  });
+}
+function renderLaunch(){
+  const btn = $('btn-launch'), k = S.selected.size;
+  btn.className = 'btn' + (S.attack === CLEAR ? ' clear' : '');
+  if(!ACTIVE()){ btn.disabled = true; btn.textContent = 'The session is not running'; return; }
+  if(!S.attack || k === 0){ btn.disabled = true; btn.textContent = 'Pick an attack and at least one hospital'; return; }
+  btn.disabled = false;
+  const names = Array.from(S.selected).sort((a, b) => a - b).map(hName).join(', ');
+  btn.textContent = S.attack === CLEAR ? '✋ Stop the attack on ' + names : '⚡ Launch ' + attackLabel(S.attack) + ' on ' + names;
+}
+function renderActive(){
+  const ids = Object.keys(S.assign).map(Number).sort((a, b) => a - b);
+  $('active-list').innerHTML = ids.length ? ids.map(i => '<div class="active-row"><span>' + hName(i) + ' · ' + attackLabel(S.assign[i]) + '</span><span>' + (S.detected.has(i) ? '⚠ detected' : '') + '</span></div>').join('')
+    : '<div class="hint" style="margin:0">None yet.</div>';
+  $('stat-active').textContent = String(ids.length);
+  $('stat-caught').textContent = String(ids.filter(i => S.detected.has(i)).length);
+}
+function renderLog(){
+  $('log-list').innerHTML = S.log.map(e => '<div class="' + e.kind + '">' + e.text + (e.sub ? '<small>' + e.sub + '</small>' : '') + '</div>').join('');
+}
+function renderStatus(){
+  const names = {waiting:'Waiting for a session', lobby:'Lobby: the defender has not pressed Begin yet. You can already prepare attacks.',
+    running:'Rounds are running. Your attacks take effect from the next round.', paused:'Paused by the defender.',
+    finished:'Session finished. The best model was sent back to the hospitals.', stopped:'Session stopped by the defender.', error:'The session stopped because of an error.'};
+  $('status-text').textContent = names[S.status] || S.status;
+  $('progress-fill').style.width = (S.rounds ? 100 * S.round / S.rounds : 0) + '%';
+  $('round-text').textContent = 'Round ' + S.round + ' / ' + S.rounds;
+  const pill = $('session-pill');
+  pill.textContent = S.status === 'waiting' ? 'No session' : 'Session: ' + S.status;
+  pill.className = 'pill ' + (S.status === 'running' ? 'ok' : (S.status === 'lobby' || S.status === 'paused' ? 'warn' : ''));
+  $('waiting-box').style.display = S.n ? 'none' : 'block';
+  $('controls').style.display = S.n ? 'block' : 'none';
+}
+function renderAll(){ renderStatus(); renderChips(); renderGrid(); renderLaunch(); renderActive(); renderLog(); }
+
+/* ===================================================================
+   EVENTS FROM THE SERVER
+   =================================================================== */
+function resetView(){
+  S.n = 0; S.rounds = 0; S.round = 0; S.status = 'waiting'; S.assign = {}; S.detected = new Set(); S.selected = new Set(); S.log = []; S.methods = []; S.ref = null;
+}
+function handleEvent(ev){
+  if(ev.type === 'lobby'){
+    S.n = ev.config.num_hospitals; S.rounds = ev.config.rounds; S.methods = ev.config.selected_methods || [];
+    S.ref = S.methods.indexOf('System B (Soft Weighting)') >= 0 ? 'System B (Soft Weighting)' : S.methods[0];
+    S.status = 'lobby';
+    addLog('Joined the session: ' + S.n + ' hospitals, ' + S.rounds + ' rounds.', 'sys');
+  } else if(ev.type === 'start'){
+    S.status = 'running';
+  } else if(ev.type === 'attack'){
+    if(ev.attack) S.assign[ev.hospital] = ev.attack; else delete S.assign[ev.hospital];
+    addLog(ev.attack ? hName(ev.hospital) + ' ← ' + attackLabel(ev.attack) : hName(ev.hospital) + ': attack stopped',
+           ev.attack ? 'atk' : 'clr', 'by ' + ev.actor + ' · from round ' + ev.effective_round);
+  } else if(ev.type === 'round'){
+    S.round = ev.round; S.status = (S.status === 'paused') ? 'paused' : 'running';
+    S.assign = {}; Object.keys(ev.attacks || {}).forEach(k => { S.assign[+k] = ev.attacks[k]; });
+    const m = ev.methods && (ev.methods[S.ref] || ev.methods[Object.keys(ev.methods)[0]]);
+    S.detected = new Set(m ? m.flagged : []);
+  } else if(ev.type === 'session'){
+    S.status = ev.status;
+    if(ev.status === 'paused' || ev.status === 'stopped' || (ev.status === 'running' && S.round > 0)) addLog('Session ' + ev.status + '.', 'sys');
+  } else if(ev.type === 'delivery'){
+    addLog('Best model: ' + ev.best_method + ' (' + ev.accuracy + '%) was sent to all hospitals.', 'sys');
+  } else if(ev.type === 'error'){
+    addLog('Error: ' + ev.message, 'sys');
+  }
+  renderAll();
+}
+
+/* ===================================================================
+   CONNECTING (finds the session, joins it, re-joins if it drops)
+   =================================================================== */
+async function probe(base){
+  try{
+    const r = await fetch(base + '/api/options'); if(!r.ok) return false;
+    const j = await r.json(); return !!(j && j.methods && j.live);
+  } catch(e){ return false; }
+}
+async function detectBackend(){
+  const q = new URLSearchParams(location.search).get('api');
+  const cands = []; if(q) cands.push(q.replace(/\/$/, ''));
+  if(location.protocol.startsWith('http')) cands.push('');
+  cands.push('http://127.0.0.1:8000');
+  for(const base of cands){ if(await probe(base)){ API = base; return true; } }
+  return false;
+}
+async function streamSession(){
+  S.streaming = true;
+  try{
+    const resp = await fetch(API + '/api/live/stream');
+    if(!resp.ok) throw new Error('no stream');
+    const reader = resp.body.getReader(), dec = new TextDecoder();
+    let buf = '';
+    while(true){
+      const chunk = await reader.read();
+      if(chunk.done) break;
+      buf += dec.decode(chunk.value, {stream:true});
+      let idx;
+      while((idx = buf.indexOf('\n')) >= 0){
+        const line = buf.slice(0, idx).trim(); buf = buf.slice(idx + 1);
+        if(line){ const ev = JSON.parse(line); if(ev.type !== 'ping') handleEvent(ev); }
+      }
+    }
+  } catch(e){ /* the next poll reconnects */ }
+  S.streaming = false;
+}
+async function pollOnce(){
+  const pill = $('backend-pill');
+  if(!await detectBackend()){ pill.textContent = '● Server not found'; pill.className = 'pill bad'; return; }
+  pill.textContent = '● Connected to ' + (API || location.host).replace('http://', ''); pill.className = 'pill ok';
+  let st;
+  try{ st = await api('/api/live/state'); } catch(e){ return; }
+  if(!st.exists) return;
+  const newSession = st.id !== S.sid;
+  if(newSession || (!S.streaming && ['lobby', 'running', 'paused'].indexOf(st.status) >= 0)){
+    S.sid = st.id; resetView(); renderAll();
+    streamSession();                       // runs in the background; replays history first
+  }
+}
+
+/* ===================================================================
+   ACTIONS
+   =================================================================== */
+async function launch(){
+  if(!ACTIVE() || !S.attack || S.selected.size === 0) return;
+  const hospitals = Array.from(S.selected).sort((a, b) => a - b);
+  const attack = S.attack === CLEAR ? null : S.attack;
+  const actor = ($('inp-name').value || 'Attacker').trim() || 'Attacker';
+  try{
+    const res = await post('/api/live/attack', {assignments: hospitals.map(h => ({hospital:h, attack:attack})), actor:actor});
+    const when = res.state && res.state.next_round ? ' from round ' + res.state.next_round : '';
+    toast(res.changed ? (attack ? attackLabel(attack) + ' sent to ' + hospitals.map(hName).join(', ') : 'Attack stopped on ' + hospitals.map(hName).join(', ')) + when : 'Nothing changed (they already had that).');
+    if(attack === 'sybil' && hospitals.length < 2) toast('Tip: Sybil needs two or more hospitals acting together.');
+    S.selected = new Set(); renderGrid(); renderLaunch();
+  } catch(e){
+    toast('Could not send: ' + e.message);
+  }
+}
+function init(){
+  buildAttackChips();
+  $('btn-all').onclick = () => { if(!ACTIVE()) return; S.selected = new Set(range(S.n)); renderGrid(); renderLaunch(); };
+  $('btn-none').onclick = () => { S.selected = new Set(); renderGrid(); renderLaunch(); };
+  $('btn-random').onclick = () => {
+    if(!ACTIVE()) return;
+    const k = Math.max(1, Math.min(S.n - 1, parseInt($('inp-k').value) || 1));
+    S.selected = new Set(randomPlacement(S.n, k)); renderGrid(); renderLaunch();
+  };
+  $('btn-launch').onclick = launch;
+  renderAll();
+  pollOnce();
+  setInterval(pollOnce, 2000);
+}
+init();
+</script>
+</body>
+</html>
